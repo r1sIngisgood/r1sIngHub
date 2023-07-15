@@ -9,10 +9,10 @@ local Window = UiLib:Window() do
         ScriptsTab:Divider({Text = "Scripts", Side = "Left"})
 
         local DexButton = ScriptsTab:Button({Name = "Dex Explorer", Side = "Left", Callback = function()
-            require(game:HttpsGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/DexExplorer.lua"))
+            loadstring(game:HttpGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/DexExplorer.lua", true))()
         end})
         local RemoteSpy = ScriptsTab:Button({Name = "RemoteSpy", Side = "Left", Callback = function()
-            require(game:HttpsGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/RemoteSpy.lua"))
+            loadstring(game:HttpGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/RemoteSpy.lua", true))()
         end})
     end
 end
