@@ -1,4 +1,4 @@
-local UiLib = require(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/UiLibs/Bracket.lua"))
+local UiLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/UiLibs/Bracket.lua"))
 
 local Window = UiLib:Window() do
     Window:ChangeName("r1sIngHub")
