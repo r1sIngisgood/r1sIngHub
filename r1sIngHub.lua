@@ -1,4 +1,4 @@
-local UiLib = require(game:HttpsGet("https://github.com/r1sIngisgood/r1sIngHub/UiLibs/Bracket.lua"))
+local UiLib = require(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/UiLibs/Bracket.lua"))
 
 local Window = UiLib:Window() do
     Window:ChangeName("r1sIngHub")
@@ -9,10 +9,10 @@ local Window = UiLib:Window() do
         ScriptsTab:Divider({Text = "Scripts", Side = "Left"})
 
         local DexButton = ScriptsTab:Button({Name = "Dex Explorer", Side = "Left", Callback = function()
-            loadstring(game:HttpGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/DexExplorer.lua", true))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/DexExplorer.lua", true))()
         end})
         local RemoteSpy = ScriptsTab:Button({Name = "RemoteSpy", Side = "Left", Callback = function()
-            loadstring(game:HttpGet("https://github.com/r1sIngisgood/r1sIngHub/Scripts/RemoteSpy.lua", true))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/RemoteSpy.lua", true))()
         end})
     end
 end
