@@ -1,13 +1,10 @@
 local placeId = game.PlaceId
 local gameTable = {}
 
-local githubURL = "https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/"
-local scriptString = ""
 local gameFile = gameTable[placeId]
 if type(gameFile) == "string" then
-    scriptString = githubURL..gameTable[placeId]
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/"..gameFile))
 else
-    scriptString = githubURL.."General.lua"
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/General.lua"))()
 end
 
-loadstring(game:HttpGet(scriptString))()
