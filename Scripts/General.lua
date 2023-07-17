@@ -38,5 +38,9 @@ local function antiAfkToggle(toggleState)
     end
 end
 local antiAfkToggle = GeneralTab:NewToggle("Anti Afk", antiAfkToggle)
-local DexExplorerButton = GeneralTab:NewButton("Dex Explorer", function(); loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/DexExplorer.lua"))()end)
-local RemoteSpyButton = GeneralTab:NewButton("Remote Spy", function(); loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/RemoteSpy.lua"))()end)
+local DexExplorerButton = GeneralTab:NewButton("Dex Explorer", function()
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/DexExplorer.lua"))()
+end)
+local RemoteSpyButton = GeneralTab:NewButton("Remote Spy", function()
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/RemoteSpy.lua"))()
+end)
