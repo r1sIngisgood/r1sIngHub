@@ -17,7 +17,7 @@ local function infJumpToggle(infJumpState)
             localPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
         end)
     else
-        infJumpConnection = nil
+        infJumpConnection:Disconnect()
     end
 end
 local InfJumpToggle = PlayerTab:NewToggle("Infinite Jump", infJumpToggle)
@@ -34,7 +34,7 @@ local function antiAfkToggle(toggleState)
             VirtualUser:Button2Up(Vector2.new(), workspace.CurrentCamera.CFrame)
         end)
     else
-        antiAfkConnection = nil
+        antiAfkConnection:Disconnect()
     end
 end
 local antiAfkToggle = GeneralTab:NewToggle("Anti Afk", antiAfkToggle)
