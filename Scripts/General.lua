@@ -1,11 +1,13 @@
+if type(_G.Valyse) ~= "boolean" then _G.Valyse = identifyexecutor() == "Valyse v1" end 
 local localPlayer = game:GetService("Players").LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 
 local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngLib/main/Library.lua"))()
 local MainWindow = UILib:NewWindow("r1sIngHub")
-
-local HomeTab = MainWindow:NewTab("Home")
-local HomeDivider = HomeTab:NewDivider("If you see this then the script for this place doesnt exist or not updated (yet)")
+local HomeLib = MainWindow:GetHomeLib()
+if not _G.Valyse then
+    HomeLib:AddText("I recommend using Valyse with this script. Some funcitions can crash/not work.")
+end
 
 local PlayerTab = MainWindow:NewTab("Player")
 local PlayerDivider = PlayerTab:NewDivider("Movement")
