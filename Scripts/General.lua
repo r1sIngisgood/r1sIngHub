@@ -6,7 +6,7 @@ local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngi
 local MainWindow = UILib:NewWindow("r1sIngHub")
 local HomeLib = MainWindow:GetHomeLib()
 if not _G.Valyse then
-    HomeLib:AddText("I recommend using Valyse with this script. Some funcitions can crash/not work.")
+    HomeLib:AddText("Valyse is recommended to use with this script. Some funcitions can crash/not work.")
 end
 
 local PlayerTab = MainWindow:NewTab("Player")
