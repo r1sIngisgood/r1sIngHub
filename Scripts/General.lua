@@ -4,7 +4,7 @@ local localPlayer = game:GetService("Players").LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 
 local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngLib/main/Library.lua"))()
-local MainWindow = UILib:NewWindow("r1sIngHub - "..getgenv().executor)
+local MainWindow = UILib:NewWindow("r1sIngHub")
 local HomeLib = MainWindow:GetHomeLib()
 if not _G.Valyse then
     HomeLib:AddText("Valyse is recommended to use with this script. Some funcitions may crash/not work.")
