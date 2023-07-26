@@ -1,12 +1,12 @@
-getgenv().scriptConfiguration = {}
-getgenv().executor = identifyexecutor()
+local defaultConfig = {["ESPState"] = false}
+getgenv().scriptConfiguration = {["ESPState"] = false}
 local localPlayer = game:GetService("Players").LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 
 local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngLib/main/Library.lua"))()
 local MainWindow = UILib:NewWindow("r1sIngHub")
 local HomeLib = MainWindow:GetHomeLib()
-if not _G.Valyse then
+if not isValyse() then
     HomeLib:AddText("Valyse is recommended to use with this script. Some funcitions may crash/not work.")
 end
 
@@ -47,3 +47,16 @@ end)
 local RemoteSpyButton = GeneralTab:NewButton("Remote Spy", function()
      loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngHub/main/Scripts/RemoteSpy.lua"))()
 end)
+
+--ESP
+local ESPTab = MainWindow:NewTab("ESP")
+local ESPDivider = ESPTab:NewDivider("ESP Settings")
+local ESPConnections = {}
+local function ESPToggle(toggleState)
+    if toggleState then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            local itBillboardGui = Instance.new("BillboardGui")
+        end
+    end
+end
+local ESPToggle = ESPTab:NewToggle("ESP", ESPToggle)
