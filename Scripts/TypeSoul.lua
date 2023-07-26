@@ -1,8 +1,9 @@
 repeat task.wait() until game:IsLoaded()
 
-local defaultConfig = {["APState"] = false, ["APRange"] = 9.79, ["APDelay"] = 0.25}
+local defaultConfig = {["APState"] = false, ["APRange"] = 9.79, ["APDelay"] = 0.275}
 getgenv().config = defaultConfig
 
+local Players = game:GetService("Players")
 local localPlayer = game:GetService("Players").LocalPlayer
 local entityFolder = workspace.Entities
 
@@ -20,6 +21,25 @@ local WeaponAnimations = {
     "rbxassetid://14070075681",
     "rbxassetid://14070076756",
     "rbxassetid://14070060393", --Crit
+
+    --Greatsword
+    "rbxassetid://14070072624",
+    "rbxassetid://14070072624",
+    "rbxassetid://14070072624",
+    "rbxassetid://14070072624",
+    "rbxassetid://14070072624",
+}
+local WeaponDelays = {
+    --Base Katana
+    ["rbxassetid://14070072624"] = 0.25,
+    ["rbxassetid://14070073772"] = 0.25,
+    ["rbxassetid://14070074688"] = 0.25,
+    ["rbxassetid://14070075681"] = 0.25,
+    ["rbxassetid://14070076756"] = 0.25,
+    ["rbxassetid://14070060393"] = 0.25, --crit
+
+    --Greatsword
+    
 }
 local otherAnimations = {
     "rbxassetid://14072096953",
@@ -56,14 +76,15 @@ local function APToggled(toggleState)
                     local animation = animTrack.Animation
                     local animationId = animation.AnimationId
                     if table.find(WeaponAnimations, animationId) then
+                        if not entity:FindFirstChild("HumanoidRootPart") then return end
                         print("BLOCKING "..entity.Name)
-                        if (entity.HumanoidRootPart.Position - localPlayerCharacter.HumanoidRootPart.Position).Magnitude <= getgenv().config.APRange then
+                        if localPlayer:DistanceFromCharacter(entity.HumanoidRootPart.Position) <= getgenv().config.APRange then
                             task.spawn(function()
                                 task.wait(getgenv().config.APDelay)
                                 if currentBlockState then
                                     localPlayerCharacter.CharacterHandler.Remotes.Block:FireServer("Released")
                                     currentBlockState = false
-                                    task.wait(0.05)
+                                    task.wait(0.01)
                                     localPlayerCharacter.CharacterHandler.Remotes.Block:FireServer("Pressed")
                                     currentBlockState = true
                                     task.wait(AP_HOLD_TIME)
@@ -101,11 +122,11 @@ local function APToggled(toggleState)
                         print("BLOCKING "..child.Name)
                         if (child.HumanoidRootPart.Position - localPlayerCharacter.HumanoidRootPart.Position).Magnitude <= getgenv().config.APRange then
                             task.spawn(function()
-                                task.wait(getgenv().config.APDelay)
+                                task.wait(getgenv().config.APDelay + WeaponDelays[animationId])
                                 if currentBlockState then
                                     localPlayerCharacter.CharacterHandler.Remotes.Block:FireServer("Released")
                                     currentBlockState = false
-                                    task.wait(0.05)
+                                    task.wait(0.01)
                                     localPlayerCharacter.CharacterHandler.Remotes.Block:FireServer("Pressed")
                                     currentBlockState = true
                                     task.wait(AP_HOLD_TIME)
