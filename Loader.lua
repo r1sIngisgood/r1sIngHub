@@ -1,6 +1,6 @@
 _G.Valyse = identifyexecutor() == "Valyse v1"
 local placeId = game.PlaceId
-local gameTable = {}
+local gameTable = {[14070029709] = "TypeSoul.lua"}
 
 local gameFile = gameTable[placeId]
 if type(gameFile) == "string" then
