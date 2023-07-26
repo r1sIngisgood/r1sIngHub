@@ -6,9 +6,6 @@ local VirtualUser = game:GetService("VirtualUser")
 local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/r1sIngisgood/r1sIngLib/main/Library.lua"))()
 local MainWindow = UILib:NewWindow("r1sIngHub")
 local HomeLib = MainWindow:GetHomeLib()
-if not isValyse() then
-    HomeLib:AddText("Valyse is recommended to use with this script. Some funcitions may crash/not work.")
-end
 
 local PlayerTab = MainWindow:NewTab("Player")
 local PlayerDivider = PlayerTab:NewDivider("Movement")
