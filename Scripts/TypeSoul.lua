@@ -28,6 +28,8 @@ local WeaponAnimations = {
     "rbxassetid://14070072624",
     "rbxassetid://14070072624",
     "rbxassetid://14070072624",
+
+    --Hollows
 }
 local WeaponDelays = {
     --Base Katana
