@@ -1,6 +1,7 @@
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
+task.wait(3)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub/Anime Adventures") then makefolder("r1sIngHub/Anime Adventures") end
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
