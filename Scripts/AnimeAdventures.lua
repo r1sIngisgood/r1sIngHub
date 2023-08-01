@@ -278,6 +278,7 @@ Func = function()
         end
     end
     getgenv().Options.current_macro_dropdown:SetValues(macro_list)
+    update_map_dropdowns()
 end,DoubleClick = false,Tooltip = "Updates macro dropdown if you manually added/removed any"})
 
 local ui_macro_delete_button = ui_macro_leftgroupbox:AddButton({Text = "Delete Selected Macro",
@@ -359,6 +360,7 @@ local function Choose_Macro(macro_name)
     if type(macro_name) ~= "string" then return end
     if not isfile("r1sIngHub/Anime Adventures/"..macro_name..".json") then
         getgenv().Options.current_macro_dropdown:SetValues()
+        update_map_dropdowns()
         return
     end
     local macro_file_contents = readfile("r1sIngHub/Anime Adventures/"..macro_name..".json")
@@ -384,6 +386,7 @@ local function Choose_Macro(macro_name)
         ui_macro_units_list_label:SetText("Units List:")
         lib:Notify("This macro is empty (or broken). Just letting you know.")
     end
+    update_map_dropdowns()
 end
 ui_macro_choosemacro:OnChanged(function()
     Choose_Macro(getgenv().Options.current_macro_dropdown.Value)
@@ -396,6 +399,7 @@ local function Create_Macro(macro_name)
         table.insert(getgenv().Options.current_macro_dropdown.Values, macro_name)
         getgenv().Options.current_macro_dropdown:SetValues()
         getgenv().Options.current_macro_dropdown:SetValue(macro_name)
+        update_map_dropdowns()
     end
 end
 ui_create_macro_input:OnChanged(function()
