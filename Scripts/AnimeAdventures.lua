@@ -721,8 +721,8 @@ if remote_get_level_data then
         level_type = "legend"
     end
     print(level_type)
-    local macro_dropdown_string_map = "macro_map_"..level_type.."_"..level_data.map.."_dropdown"
-    local macro_dropdown_string_id  = "macro_map_"..level_type.."_"..level_data.id.."_dropdown"
+    local macro_dropdown_string_map = "macro_map_"..tostring(level_type).."_"..tostring(level_data).map.."_dropdown"
+    local macro_dropdown_string_id  = "macro_map_"..tostring(level_type).."_"..tostring(level_data.id).."_dropdown"
     if getgenv().Options[macro_dropdown_string_map] then
         warn("Found "..macro_dropdown_string_map)
         if getgenv().Options[macro_dropdown_string_map].Value and getgenv().Options[macro_dropdown_string_map].Value ~= "" then
