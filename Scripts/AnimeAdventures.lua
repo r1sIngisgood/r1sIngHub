@@ -682,6 +682,7 @@ local on_namecall = function(object, ...)
                 end
             end
             current_macro_record_data[""..current_record_step] = {type = "upgrade_unit_ingame", money = unit_upgrade_cost, pos = tostring(unit_obj._hitbox.Position)}
+            current_record_step += 1
         end
 
         --[[if object.Name == "sell_unit_ingame" then
@@ -689,6 +690,7 @@ local on_namecall = function(object, ...)
             local unit_data = get_unit_data_by_name(unit_obj.Name)
             local unit_pos = unit_obj._hitbox.CFrame
             current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
+            current_record_step += 1
         end]]
 
         if object.Name == "use_active_attack" then
