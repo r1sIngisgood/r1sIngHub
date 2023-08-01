@@ -680,6 +680,7 @@ ui_macro_record_toggle:OnChanged(function()
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..tostring(getgenv().Options.current_macro_dropdown.Value)..".json") or not getgenv().Options.current_macro_dropdown.Value then return end
         local new_file_content = HttpService:JSONEncode(current_macro_record_data)
         writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json", new_file_content)
+        Save_Configuration()
     else
         if not getgenv().Options.current_macro_dropdown.Value then lib:Notify("Choose a macro first!") return end
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json") then
@@ -687,7 +688,6 @@ ui_macro_record_toggle:OnChanged(function()
             lib:Notify("File doesnt exist?")
             return
         end
-        Save_Configuration()
     end
 end)
 local on_namecall = function(object, ...)
