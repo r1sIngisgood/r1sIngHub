@@ -1,13 +1,23 @@
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
+
+-- Services//
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
+local HttpService = game:GetService("HttpService")
+--\\
+
 task.wait(3)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
-if not isfolder("r1sIngHub/Anime Adventures") then makefolder("r1sIngHub/Anime Adventures") end
+if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
+if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
+if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", "") end
+
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
 -- UI//
-local HttpService = game:GetService("HttpService")
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua"))()
 local lib_SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
 local ui_window = lib:CreateWindow({Title = "r1sIngHub", Center = true, AutoShow = true})
@@ -16,16 +26,11 @@ local ui_tabs = {
     farm_settings = ui_window:AddTab("Farm Settings"),
     ui_settings = ui_window:AddTab("UI Settings")
 }
-local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
-local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
-ui_settings_lefttabbox_ui:AddButton("Unload", function() lib:Unload() end)
-ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
-lib.ToggleKeybind = getgenv().Options.MenuKeybind
 
 local ui_settings_discordgroupbox = ui_tabs.ui_settings:AddRightGroupbox("Discord Config")
-local ui_settings_discordwebhook_input = ui_settings_discordgroupbox:AddInput("discord_webhook", {Default = "",Numeric = false,Finished=true,Text="Webhook Link",Tooltip="Paste in ur link and press ENTER.",Placeholder="https://discord.com/api/webhooks/..."})
+local ui_settings_discordwebhook_input = ui_settings_discordgroupbox:AddInput("discord_webhook_input", {Default = "",Numeric = false,Finished=true,Text="Webhook Link",Tooltip="Paste in ur link and press ENTER.",Placeholder="https://discord.com/api/webhooks/..."})
 local ui_settings_discordwebhookping_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_ping_toggle", {Text="Ping id",Default=false,Tooltip='Pings the id you pasted when sending the webhook'})
-local ui_settings_discordwebhookping_input = ui_settings_discordgroupbox:AddInput("discord_webhook_ping_id",{Default="",Numeric=true,Finished=true,Text="Discord User Id",Tooltip="Paste discord user id and press ENTER"})
+local ui_settings_discordwebhookping_input = ui_settings_discordgroupbox:AddInput("discord_webhook_ping_id_input",{Default="",Numeric=true,Finished=true,Text="Discord User Id",Tooltip="Paste discord user id and press ENTER"})
 local ui_settings_discordwebhookresult_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_result_toggle", {Text="Send results",Default=false,Tooltip='Sends results upon completion/failure'})
 local function get_hyra_link(oldlink)
     local newlink
@@ -69,13 +74,6 @@ Func=function()
     end
 end})
 --//
-
--- Services//
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
---\\
 
 -- Game Stuff//
 local units_module = require(ReplicatedStorage.src.Data.Units)
@@ -217,6 +215,44 @@ end
 function string_insert(str1, str2, pos) return str1:sub(1,pos)..str2..str1:sub(pos+1) end
 local function cfgbeautify(str) return string.gsub(string.gsub(str,"r1sIngHub"..[[\]].."Anime Adventures"..[[\]],""),".json","") end
 local function isdotjson(file) return string.sub(file, -5) == ".json" end
+local config_ignore_list = {"macro_create_input", "MenuKeybind", "macro_record_toggle"}
+local function Save_Configuration()
+    local options_table = {toggle_table = {}, map_dropdowns = {}, input_table = {}}
+    for option_name, val in pairs(getgenv().Options) do
+        if string.find(option_name, "macro_map") and not table.find(config_ignore_list, option_name) then
+            options_table.map_dropdowns[option_name] = val.Value
+        elseif not string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
+            options_table[option_name] = val.Value
+        elseif string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
+            options_table.input_table[option_name] = ""..val.Value
+        end
+    end
+    for toggle_name, val in pairs(getgenv().Toggles) do
+        options_table.toggle_table[toggle_name] = val.Value
+    end
+    local jsonencoded_options_table = HttpService:JSONEncode(options_table)
+    writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
+end
+local function Load_Configuration()
+    local config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
+    for option_name, val in pairs(config_file) do
+        warn(option_name.." : "..tostring(val))
+        if option_name == "toggle_table" and val then
+            for toggle_name, toggle_value in pairs(val) do
+                getgenv().Toggles[toggle_name]:SetValue(toggle_value)
+            end
+        elseif option_name == "map_dropdowns" and val then
+            for dropdown_name, dropdown_value in pairs(val) do
+                getgenv().Options[dropdown_name]:SetValue(dropdown_value)
+            end
+        else
+            local option = getgenv().Options[option_name]
+            if option and val then
+                option:SetValue(val)
+            end
+        end
+    end
+end
 --\\
 
 -- Macro //
@@ -287,6 +323,7 @@ Func = function()
     table.remove(getgenv().Options.current_macro_dropdown.Values, table.find(getgenv().Options.current_macro_dropdown.Values,getgenv().Options.current_macro_dropdown.Value))
     getgenv().Options.current_macro_dropdown:SetValues()
     getgenv().Options.current_macro_dropdown:SetValue()
+    Save_Configuration()
 end, DoubleClick = false,Tooltip = "Delete's selected macro"})
 local ui_macro_units_list_label = ui_macro_leftgroupbox:AddLabel("Unit List:", true)
 local ui_macro_units_equip_button = ui_macro_leftgroupbox:AddButton({Text = "Equip Macro Units",
@@ -357,7 +394,7 @@ for i,v in pairs(sorted_map_types) do
 end
 
 local function Choose_Macro(macro_name)
-    if type(macro_name) ~= "string" then return end
+    if type(macro_name) ~= "string" or macro_name == "" then return end
     if not isfile("r1sIngHub/Anime Adventures/"..macro_name..".json") then
         getgenv().Options.current_macro_dropdown:SetValues()
         update_map_dropdowns()
@@ -387,31 +424,27 @@ local function Choose_Macro(macro_name)
         lib:Notify("This macro is empty (or broken). Just letting you know.")
     end
     update_map_dropdowns()
+    Save_Configuration()
 end
 ui_macro_choosemacro:OnChanged(function()
     Choose_Macro(getgenv().Options.current_macro_dropdown.Value)
 end)
 
 local function Create_Macro(macro_name)
-    if type(macro_name) ~= "string" then return end
+    if type(macro_name) ~= "string" or macro_name == "" then return end
     if not isfile("r1sIngHub/Anime Adventures/"..macro_name..".json") then
         writefile("r1sIngHub/Anime Adventures/"..macro_name..".json", "")
         table.insert(getgenv().Options.current_macro_dropdown.Values, macro_name)
         getgenv().Options.current_macro_dropdown:SetValues()
         getgenv().Options.current_macro_dropdown:SetValue(macro_name)
         update_map_dropdowns()
+        Save_Configuration()
     end
 end
 ui_create_macro_input:OnChanged(function()
     if getgenv().Options.macro_create_input.Value == "" or not getgenv().Options.macro_create_input.Value then return end
     Create_Macro(getgenv().Options.macro_create_input.Value)
 end)
-
---[[warn("-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=--==--=-=-=-=-=-=-==")
-for i,v in pairs(map_list) do
-    warn(i.." : "..v)
-end
-warn("-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=--==--=-=-=-=-=-=-==")]]
 
 local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupbox("Farm Settings")
 
@@ -616,6 +649,7 @@ local function Play_Macro()
         lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
         ui_macro_play_progress_label:SetText("Progress: COMPLETED")
     end)
+    Save_Configuration()
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -624,6 +658,8 @@ ui_macro_play_toggle:OnChanged(function()
         macro_playing = false
     end
 end)
+
+Load_Configuration()
 
 -- MACRO RECORDING
 local game_metatable = getrawmetatable(game)
@@ -651,6 +687,7 @@ ui_macro_record_toggle:OnChanged(function()
             lib:Notify("File doesnt exist?")
             return
         end
+        Save_Configuration()
     end
 end)
 local on_namecall = function(object, ...)
@@ -661,7 +698,6 @@ local on_namecall = function(object, ...)
         if object.Name == "spawn_unit" then
             local unit_data = get_unit_data_by_uuid(args[1])
             local unit_cframe = args[2]
-            warn(unit_cframe)
             local unit_cost
             for a,b in pairs(units_module) do
                 if b["id"] == unit_data["unit_id"] then
@@ -675,7 +711,6 @@ local on_namecall = function(object, ...)
         if object.Name == "upgrade_unit_ingame" then
             local unit_obj = args[1]
             local unit_data = get_unit_data_by_name(unit_obj.Name)
-            warn(tostring(unit_data).." : "..tostring(unit_obj.Name))
             if string.find(unit_obj.Name, "homura") then
                 local sd = HttpService:JSONEncode(unit_data)
                 writefile("HOMURA_DATA", sd)
@@ -697,18 +732,14 @@ local on_namecall = function(object, ...)
             current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
             current_record_step += 1
         end
-
-        if object.Name == "use_active_attack" then
-            
-        end
     end
     return game_namecall(object, ...)
 end
 game_metatable.__namecall = on_namecall
 
-lib_SaveManager:SetLibrary(lib)
-lib_SaveManager:BuildConfigSection(ui_tabs.ui_settings)
-lib_SaveManager:LoadAutoloadConfig()
+--lib_SaveManager:SetLibrary(lib)
+--lib_SaveManager:BuildConfigSection(ui_tabs.ui_settings)
+--lib_SaveManager:LoadAutoloadConfig()
 if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv().Options.current_macro_dropdown.Value ~= {} then
     chosen_macro_contents = {getgenv().Options.current_macro_dropdown.Value}
     local stepCount = 0
@@ -754,12 +785,9 @@ end
 task.spawn(function()
     task.wait(2)
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
-        warn("detected macro"..getgenv().Options.current_macro_dropdown.Value..", playing.")
         Play_Macro()
     end
-    warn(value_voting_finished)
     if value_voting_finished ~= nil then
-        warn("Auto starting")
         repeat task.wait(1)
             remote_vote_start:InvokeServer()
         until value_voting_finished == true
@@ -781,3 +809,25 @@ task.spawn(function()
     antiAfkConnection:Disconnect()
 end)
 --\\
+
+local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
+local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
+ui_settings_lefttabbox_ui:AddButton("Unload", function()
+    lib:Unload()
+    Save_Configuration()
+end)
+ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
+lib.ToggleKeybind = getgenv().Options.MenuKeybind
+
+task.spawn(function()
+    task.wait(5)
+    for _, macro_dropdown in pairs(map_dropdowns) do
+        macro_dropdown:OnChanged(function()
+            Save_Configuration()
+        end)
+    end
+    while not lib.Unloaded do
+        task.wait(10)
+        Save_Configuration()
+    end
+end)
