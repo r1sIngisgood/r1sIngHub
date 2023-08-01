@@ -676,6 +676,10 @@ local on_namecall = function(object, ...)
             local unit_obj = args[1]
             local unit_data = get_unit_data_by_name(unit_obj.Name)
             warn(tostring(unit_data).." : "..tostring(unit_obj.Name))
+            if string.find(unit_obj.Name, "homura") then
+                local sd = HttpService:JSONEncode(unit_data)
+                writefile("HOMURA_DATA", sd)
+            end
             local unit_upgrade_cost
             for i,v in pairs(units_module) do
                 if v["id"] == unit_data["unit_id"] then
