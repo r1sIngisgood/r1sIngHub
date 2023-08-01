@@ -80,7 +80,18 @@ local VirtualUser = game:GetService("VirtualUser")
 local units_module = require(ReplicatedStorage.src.Data.Units)
 local maps_module = ReplicatedStorage.src.Data.Maps
 local levels_module = ReplicatedStorage.src.Data.Levels
-local workspace_data_folder = workspace:WaitForChild("_DATA")
+local worlds_module = ReplicatedStorage.src.Data.Worlds
+local worlds_module_table = {}
+for _,obj in pairs(worlds_module:GetDescendants()) do
+    if obj:IsA("ModuleScript") then
+        local req = require(obj)
+        for i,v in pairs(req) do
+            worlds_module_table[i] = v
+        end
+    end
+end
+
+local workspace_data_folder = workspace:FindFirstChild("_DATA")
 local value_game_started = nil
 local value_voting_finished = nil
 if workspace_data_folder then
@@ -111,8 +122,14 @@ else
 end
 
 local map_list = {}
-local map_vanity_names = {}
-local sorted_id_to_maps_list = {
+local map_vanity_names = {
+    story = {},
+    portal = {},
+    raid = {},
+    infinite = {},
+    legend = {}
+}
+local sorted_map_types = {
     story = {},
     portal = {},
     raid = {},
@@ -127,7 +144,7 @@ local function update_map_dropdowns()
     end
 end
 
-for i,v in pairs(maps_module:GetDescendants()) do
+--[[for i,v in pairs(maps_module:GetDescendants()) do
     if v:IsA("ModuleScript") then
         local req = require(v)
         for d,c in pairs(req) do
@@ -135,46 +152,42 @@ for i,v in pairs(maps_module:GetDescendants()) do
             map_vanity_names[c.id] = c.name
         end
     end
-end
+end]]
 for i,v in pairs(levels_module:GetDescendants()) do
     if v:IsA("ModuleScript") and v.Name ~= "Levels_Rest" then
         local req = require(v)
         for d,c in pairs(req) do
-            if string.find(c.name, "Act") then
-                --print(c.id.." is story")
-                if not sorted_id_to_maps_list[map_vanity_names[c.map]] then
-                    sorted_id_to_maps_list.story[map_vanity_names[c.map]] = c.map
-                end
+            if c.portal_group and c.portal_group ~= "christmas" and c.portal_group ~= "csm" then
+                --print(c.id.." is portal")
+                sorted_map_types.portal[c.id] = true
+                map_vanity_names.portal[c.id] = c.name
             end
-            if string.find(c.id, "portal") then
-                if not string.find(c.id, "csm") then
-                    --print(c.id.." is portal")
-                    if not sorted_id_to_maps_list[map_vanity_names[c.map]] then
-                        sorted_id_to_maps_list.portal[map_vanity_names[c.map]] = c.map
-                    end
-                end
-            end
-            if string.find(c.id, "raid") then
+            if c.is_raid and not c._IS_EVENT_RAID and c.name ~= "Universal Tournament" then
                 --print(c.id.." is raid")
-                if not sorted_id_to_maps_list[map_vanity_names[c.map]] then
-                    sorted_id_to_maps_list.raid[map_vanity_names[c.map]] = c.map
-                end
+                sorted_map_types.raid[c.map] = true
+                map_vanity_names.raid[c.map] = worlds_module_table[c.world].name
             end
-            if string.find(c.id, "infinite") then
-                --print(c.id.." is infinite")
-                if not sorted_id_to_maps_list[map_vanity_names[c.map]] then
-                    sorted_id_to_maps_list.infinite[map_vanity_names[c.map]] = c.map
-                end
-            end
-            if string.find(c.id, "legend") then
-                --print(c.id.." is legend")
-                if not sorted_id_to_maps_list[map_vanity_names[c.map]] then
-                    sorted_id_to_maps_list.legend[map_vanity_names[c.map]] = c.map
+            if c.infinite then
+                if c.map ~= "madoka" and not c.is_raid then --  WHY THE FUCK IS THERE MADOKA EVENT INF IN LEVELS PLEASE TELL ME DEVS
+                    print(c.id.." is infinite")
+                    sorted_map_types.infinite[c.map] = true
+                    map_vanity_names.infinite[c.map] = worlds_module_table[c.world].name
                 end
             end
         end
     end
 end
+for i,v in pairs(worlds_module_table) do
+        if string.find(i, "legend") then
+            sorted_map_types.legend[v.map] = true
+            map_vanity_names.legend[v.map] = v.name
+        elseif not v.raid_world then
+            sorted_map_types.story[v.map] = true
+            map_vanity_names.story[v.map] = v.name
+        end
+end
+local jsonencodedsortedmaps = HttpService:JSONEncode(sorted_map_types)
+writefile("sorted_map_types.json", jsonencodedsortedmaps)
 --\\
 
 -- Misc Functions//
@@ -257,7 +270,7 @@ Func = function()
     getgenv().Options.current_macro_dropdown:SetValues()
     getgenv().Options.current_macro_dropdown:SetValue()
 end, DoubleClick = false,Tooltip = "Delete's selected macro"})
-local ui_macro_units_list_label = ui_macro_leftgroupbox:AddLabel("Units List:", true)
+local ui_macro_units_list_label = ui_macro_leftgroupbox:AddLabel("Unit List:", true)
 local ui_macro_units_equip_button = ui_macro_leftgroupbox:AddButton({Text = "Equip Macro Units",
 Func = function()
     if chosen_macro_contents == "" then lib:Notify("This macro is broken/empty.") return end
@@ -299,25 +312,25 @@ local ui_macro_righttabbox_tabs = {
     portal = ui_macro_righttabbox:AddTab("Portals"),
 }
 
-for i,v in pairs(sorted_id_to_maps_list) do
-    for map_id, map in pairs(v) do
+for i,v in pairs(sorted_map_types) do
+    for map, state in pairs(v) do
         if i ~= "infinite" then
-            local ui_macro_map_dropdown = ui_macro_righttabbox_tabs[i]:AddDropdown("macro_map_"..map_id.."_dropdown",
+            local ui_macro_map_dropdown = ui_macro_righttabbox_tabs[i]:AddDropdown("macro_map_"..map.."_dropdown",
             {
                 Values = macro_list,
                 Default = 0,
                 Multi = false,
-                Text = map_vanity_names[map],
+                Text = map_vanity_names[i][map],
                 Tooltip = ''
             })
             table.insert(map_dropdowns, ui_macro_map_dropdown)
-        else
-            local ui_macro_map_dropdown = ui_macro_rightgroupbox:AddDropdown("macro_map_"..map_id.."_dropdown",
+        elseif i == "infinite" then
+            local ui_macro_map_dropdown = ui_macro_rightgroupbox:AddDropdown("macro_map_"..map.."_dropdown",
             {
                 Values = macro_list,
                 Default = 0,
                 Multi = false,
-                Text = map_vanity_names[map],
+                Text = map_vanity_names[i][map],
                 Tooltip = ''
             })
             table.insert(map_dropdowns, ui_macro_map_dropdown)
@@ -344,7 +357,7 @@ local function Choose_Macro(macro_name)
         end
         table.insert(chosen_macro_contents, stepCount)
         table.insert(chosen_macro_contents, macro_units_list)
-        local string_for_ui = "Units List:\n"
+        local string_for_ui = "Unit List:\n"
         for i,v in pairs(macro_units_list) do
             string_for_ui = string_for_ui..i..": "..v.."\n"
         end
@@ -379,7 +392,7 @@ for i,v in pairs(map_list) do
 end
 warn("-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=--==--=-=-=-=-=-=-==")]]
 
-local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupBox("Farm Settings")
+local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupbox("Farm Settings")
 
 local ui_farm_autounits_groupbox = ui_tabs.farm_settings:AddRightGroupbox("Auto Units")
 local ui_farm_autounits_autohomura_toggle = ui_farm_autounits_groupbox:AddToggle("auto_homura_toggle",{Text="Auto Homura",Default = false,Tooltip="Homura will timestop if she has an enemy in range."})
