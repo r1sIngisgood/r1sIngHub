@@ -1,12 +1,12 @@
-local HttpService = game:GetService("HttpService")
-
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub/Anime Adventures") then makefolder("r1sIngHub/Anime Adventures") end
-
+local SERVER_READY = workspace:WaitForChild("SERVER_READY")
+repeat task.wait() until SERVER_READY.Value
 -- UI//
+local HttpService = game:GetService("HttpService")
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua"))()
 local lib_SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
 local ui_window = lib:CreateWindow({Title = "r1sIngHub", Center = true, AutoShow = true})
@@ -82,11 +82,20 @@ local maps_module = ReplicatedStorage.src.Data.Maps
 local levels_module = ReplicatedStorage.src.Data.Levels
 local worlds_module = ReplicatedStorage.src.Data.Worlds
 local worlds_module_table = {}
+local maps_module_table = {}
 for _,obj in pairs(worlds_module:GetDescendants()) do
     if obj:IsA("ModuleScript") then
         local req = require(obj)
         for i,v in pairs(req) do
             worlds_module_table[i] = v
+        end
+    end
+end
+for _,obj in pairs(maps_module:GetDescendants()) do
+    if obj:IsA("ModuleScript") then
+        local req = require(obj)
+        for i,v in pairs(req) do
+            maps_module_table[i] = v
         end
     end
 end
@@ -169,7 +178,7 @@ for i,v in pairs(levels_module:GetDescendants()) do
             end
             if c.infinite then
                 if c.map ~= "madoka" and not c.is_raid then --  WHY THE FUCK IS THERE MADOKA EVENT INF IN LEVELS PLEASE TELL ME DEVS
-                    print(c.id.." is infinite")
+                    --print(c.id.." is infinite")
                     sorted_map_types.infinite[c.map] = true
                     map_vanity_names.infinite[c.map] = worlds_module_table[c.world].name
                 end
@@ -178,16 +187,23 @@ for i,v in pairs(levels_module:GetDescendants()) do
     end
 end
 for i,v in pairs(worlds_module_table) do
-        if string.find(i, "legend") then
-            sorted_map_types.legend[v.map] = true
-            map_vanity_names.legend[v.map] = v.name
-        elseif not v.raid_world then
-            sorted_map_types.story[v.map] = true
-            map_vanity_names.story[v.map] = v.name
-        end
+    if string.find(i, "legend") then
+        sorted_map_types.legend[v.map] = true
+        map_vanity_names.legend[v.map] = v.name
+    elseif not v.raid_world then
+        sorted_map_types.story[v.map] = true
+        map_vanity_names.story[v.map] = v.name
+    end
 end
 local jsonencodedsortedmaps = HttpService:JSONEncode(sorted_map_types)
 writefile("sorted_map_types.json", jsonencodedsortedmaps)
+--summer temp fix cuz idk how to get it from elsewhere TODO: Find a module with every level including summer
+for i,v in pairs(maps_module_table) do
+    if string.find(i, "summer") then
+        sorted_map_types.portal[v.id] = true
+        map_vanity_names.portal[v.id] = v.name
+    end
+end
 --\\
 
 -- Misc Functions//
@@ -315,7 +331,7 @@ local ui_macro_righttabbox_tabs = {
 for i,v in pairs(sorted_map_types) do
     for map, state in pairs(v) do
         if i ~= "infinite" then
-            local ui_macro_map_dropdown = ui_macro_righttabbox_tabs[i]:AddDropdown("macro_map_"..map.."_dropdown",
+            local ui_macro_map_dropdown = ui_macro_righttabbox_tabs[i]:AddDropdown("macro_map_"..i.."_"..map.."_dropdown",
             {
                 Values = macro_list,
                 Default = 0,
@@ -325,7 +341,7 @@ for i,v in pairs(sorted_map_types) do
             })
             table.insert(map_dropdowns, ui_macro_map_dropdown)
         elseif i == "infinite" then
-            local ui_macro_map_dropdown = ui_macro_rightgroupbox:AddDropdown("macro_map_"..map.."_dropdown",
+            local ui_macro_map_dropdown = ui_macro_rightgroupbox:AddDropdown("macro_map_"..i.."_"..map.."_dropdown",
             {
                 Values = macro_list,
                 Default = 0,
@@ -508,7 +524,7 @@ task.spawn(coroutine.wrap(auto_erwin))
 -- MACRO PLAYING
 local function get_unit_data_by_name(unit_name)
     for i,v in pairs(equipped_units) do
-        if v["unit_id"] == unit_name then
+        if v.unit_id == unit_name then
             return v
         end
     end
@@ -576,6 +592,19 @@ local function Play_Macro()
                     repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
                 end
                 remote_upgrade_ingame:InvokeServer(unit_obj)
+            end
+            if cur_task == "sell_unit_ingame" then
+                local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
+                local unit_obj
+                for _, unit in pairs(workspace._UNITS:GetChildren()) do
+                    if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
+                        if (unit._hitbox.Position - unit_pos).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
+                            unit_obj = unit
+                        end
+                    end
+                end
+                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
+                remote_sell_ingame:InvokeServer(unit_obj)
             end
         end
         macro_playing = false
@@ -651,7 +680,6 @@ local on_namecall = function(object, ...)
         end
 
         if object.Name == "sell_unit_ingame" then
-            --{"money":5216.640557600007,"type":"sell_unit_ingame","pos":"-248.05911254882812,1.2054955959320068,-8.016624450683594, 1, 0, -0, -0, 1, -0, 0, 0, 1"}
             local unit_obj = args[1]
             local unit_data = get_unit_data_by_name(unit_obj.Name)
             local unit_pos = unit_obj._hitbox.CFrame
@@ -677,6 +705,40 @@ if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv()
     end
     table.insert(chosen_macro_contents, stepCount)
 end
+-- Macro Finding//
+if remote_get_level_data then
+    local level_data = remote_get_level_data:InvokeServer()
+    local level_type = nil
+    if level_data._is_actual_storymode then
+        level_type = "story"
+    elseif level_data.is_raid then
+        level_type = "raid"
+    elseif level_data.portal_group then
+        level_type = "portal"
+    elseif level_data._gamemode == "infinite" then
+        level_type = "infinite"
+    elseif string.find(level_data.world, "legend") then
+        level_type = "legend"
+    end
+    print(level_type)
+    local macro_dropdown_string_map = "macro_map_"..level_type.."_"..level_data.map.."_dropdown"
+    local macro_dropdown_string_id  = "macro_map_"..level_type.."_"..level_data.id.."_dropdown"
+    if getgenv().Options[macro_dropdown_string_map] then
+        warn("Found "..macro_dropdown_string_map)
+        if getgenv().Options[macro_dropdown_string_map].Value and getgenv().Options[macro_dropdown_string_map].Value ~= "" then
+            warn("Found "..macro_dropdown_string_map.." Macro")
+            getgenv().Options.current_macro_dropdown:SetValue(getgenv().Options[macro_dropdown_string_map].Value)
+        end
+    elseif getgenv().Options[macro_dropdown_string_id] then
+        warn("Found "..macro_dropdown_string_id)
+        if getgenv().Options[macro_dropdown_string_id].Value and getgenv().Options[macro_dropdown_string_id].Value ~= "" then
+            warn("Found "..macro_dropdown_string_id.." Macro")
+            getgenv().Options.current_macro_dropdown:SetValue(getgenv().Options[macro_dropdown_string_id].Value)
+        end
+    end
+end
+
+--\\
 task.spawn(function()
     task.wait(2)
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
@@ -706,8 +768,4 @@ task.spawn(function()
     repeat task.wait(1) until lib.Unloaded
     antiAfkConnection:Disconnect()
 end)
---\\
-
--- Webhook//
-
 --\\
