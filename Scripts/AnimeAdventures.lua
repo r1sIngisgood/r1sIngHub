@@ -17,64 +17,6 @@ if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
--- UI//
-local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua"))()
-local lib_SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
-local ui_window = lib:CreateWindow({Title = "r1sIngHub", Center = true, AutoShow = true})
-local ui_tabs = {
-    macro = ui_window:AddTab("Macro"),
-    farm_settings = ui_window:AddTab("Farm Settings"),
-    ui_settings = ui_window:AddTab("UI Settings")
-}
-
-local ui_settings_discordgroupbox = ui_tabs.ui_settings:AddRightGroupbox("Discord Config")
-local ui_settings_discordwebhook_input = ui_settings_discordgroupbox:AddInput("discord_webhook_input", {Default = "",Numeric = false,Finished=true,Text="Webhook Link",Tooltip="Paste in ur link and press ENTER.",Placeholder="https://discord.com/api/webhooks/..."})
-local ui_settings_discordwebhookping_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_ping_toggle", {Text="Ping id",Default=false,Tooltip='Pings the id you pasted when sending the webhook'})
-local ui_settings_discordwebhookping_input = ui_settings_discordgroupbox:AddInput("discord_webhook_ping_id_input",{Default="",Numeric=true,Finished=true,Text="Discord User Id",Tooltip="Paste discord user id and press ENTER"})
-local ui_settings_discordwebhookresult_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_result_toggle", {Text="Send results",Default=false,Tooltip='Sends results upon completion/failure'})
-local function get_hyra_link(oldlink)
-    local newlink
-    if string.find(oldlink, "canary.discord.com") then
-        newlink = string.gsub(oldlink,"canary.discord.com/", "webhook.lewisakura.moe/")
-    else
-        newlink = string.gsub(oldlink,"discord.com/", "webhook.lewisakura.moe/")
-    end
-    return newlink
-end
-local function discord_webhook_send(contents)
-    local oldlink = ui_settings_discordwebhook_input.Value
-    local newlink = get_hyra_link(oldlink)
-    local encoded = HttpService:JSONEncode(contents)
-    local output
-    print(encoded)
-    local success, err = pcall(function()
-        output = game:HttpPost(newlink, encoded)
-    end)
-    if err then
-        warn("Discord Webhook Error:\n"..err)
-    elseif success then
-        warn("Discord Webhook Success: "..tostring(success).."\n"..tostring(output))
-    end
-end
-local ui_settings_discordwebhooktest_button = ui_settings_discordgroupbox:AddButton({Text="Test Webhook",DoubleClick=false,Tooltip="Sends a test message to your webhook",
-Func=function()
-    if not string.find(ui_settings_discordwebhook_input.Value,"discord.com/api/webhooks") and not string.find(ui_settings_discordwebhook_input.Value,"canary.discord.com/api/webhooks") then
-        lib:Notify("Enter a valid webhook link first!")
-    else
-        local pingid = ui_settings_discordwebhookping_input.Value or nil
-        local ping = nil
-        if pingid ~= nil then
-            ping = "<@"..pingid..">"
-        end
-        local contents = {
-            ['username'] = 'r1sIng',
-            ['content'] = 'abc'
-        }
-        discord_webhook_send(contents)
-    end
-end})
---//
-
 -- Game Stuff//
 local units_module = require(ReplicatedStorage.src.Data.Units)
 local maps_module = ReplicatedStorage.src.Data.Maps
@@ -98,7 +40,6 @@ for _,obj in pairs(maps_module:GetDescendants()) do
         end
     end
 end
-
 local workspace_data_folder = workspace:FindFirstChild("_DATA")
 local value_game_started = nil
 local value_voting_finished = nil
@@ -128,7 +69,6 @@ if remote_get_level_data then
 else
     current_map = nil
 end
-
 local map_list = {}
 local map_vanity_names = {
     story = {},
@@ -145,22 +85,11 @@ local sorted_map_types = {
     legend = {},
 }
 local map_dropdowns = {}
-
 local function update_map_dropdowns()
     for i,v in pairs(map_dropdowns) do
         v:SetValues()
     end
 end
-
---[[for i,v in pairs(maps_module:GetDescendants()) do
-    if v:IsA("ModuleScript") then
-        local req = require(v)
-        for d,c in pairs(req) do
-            table.insert(map_list, c.id)
-            map_vanity_names[c.id] = c.name
-        end
-    end
-end]]
 for i,v in pairs(levels_module:GetDescendants()) do
     if v:IsA("ModuleScript") and v.Name ~= "Levels_Rest" then
         local req = require(v)
@@ -194,8 +123,6 @@ for i,v in pairs(worlds_module_table) do
         map_vanity_names.story[v.map] = v.name
     end
 end
-local jsonencodedsortedmaps = HttpService:JSONEncode(sorted_map_types)
-writefile("sorted_map_types.json", jsonencodedsortedmaps)
 --summer temp fix cuz idk how to get it from elsewhere TODO: Find a module with every level including summer
 for i,v in pairs(maps_module_table) do
     if string.find(i, "summer") then
@@ -204,6 +131,41 @@ for i,v in pairs(maps_module_table) do
     end
 end
 --\\
+--\\
+
+-- UI//
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua"))()
+local lib_SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/addons/SaveManager.lua"))()
+local ui_window = lib:CreateWindow({Title = "r1sIngHub", Center = true, AutoShow = true})
+local ui_tabs = {
+    macro = ui_window:AddTab("Macro"),
+    farm_settings = ui_window:AddTab("Farm Settings"),
+    ui_settings = ui_window:AddTab("UI Settings")
+}
+
+--[[local ui_settings_discordgroupbox = ui_tabs.ui_settings:AddRightGroupbox("Discord Config")
+local ui_settings_discordwebhook_input = ui_settings_discordgroupbox:AddInput("discord_webhook_input", {Default = "",Numeric = false,Finished=true,Text="Webhook Link",Tooltip="Paste in ur link and press ENTER.",Placeholder="https://discord.com/api/webhooks/..."})
+local ui_settings_discordwebhookping_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_ping_toggle", {Text="Ping id",Default=false,Tooltip='Pings the id you pasted when sending the webhook'})
+local ui_settings_discordwebhookping_input = ui_settings_discordgroupbox:AddInput("discord_webhook_ping_id_input",{Default="",Numeric=true,Finished=true,Text="Discord User Id",Tooltip="Paste discord user id and press ENTER"})
+local ui_settings_discordwebhookresult_toggle = ui_settings_discordgroupbox:AddToggle("discord_webhook_result_toggle", {Text="Send results",Default=false,Tooltip='Sends results upon completion/failure'})]]
+--\\
+
+local ui_farm_autounits_groupbox = ui_tabs.farm_settings:AddRightGroupbox("Auto Units")
+local ui_farm_autounits_autohomura_toggle = ui_farm_autounits_groupbox:AddToggle("auto_homura_toggle",{Text="Auto Homura",Default = false,Tooltip="Homura will timestop if she has an enemy in range."})
+local ui_farm_autounits_buffdivider = ui_farm_autounits_groupbox:AddDivider()
+local ui_farm_autounits_bufflabel = ui_farm_autounits_groupbox:AddLabel("Buff")
+local ui_farm_autounits_autoerwin_toggle = ui_farm_autounits_groupbox:AddToggle("auto_erwin_toggle",{Text="Auto Erwin 100%",Default = false,Tooltip="Auto Erwin buff 100%"})
+local ui_farm_autounits_autoerwincurse_toggle = ui_farm_autounits_groupbox:AddToggle("erwin_curse_toggle",{Text="Erwin Curse?",Default = false,Tooltip="Changes delay to 8 seconds instead of 15"})
+local ui_farm_autounits_autoerwinmanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_erwin_delay_toggle",{Text="Manual Erwin Delay",Default = false,Tooltip="Manually control the delay"})
+local ui_farm_autounits_autoerwinmanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_erwin_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
+local ui_farm_autounits_erwinwenda_divider = ui_farm_autounits_groupbox:AddDivider()
+local ui_farm_autounits_autowenda_toggle = ui_farm_autounits_groupbox:AddToggle("auto_wenda_toggle",{Text="Auto Wenda 100%",Default = false,Tooltip="Auto Wenda buff 100%"})
+local ui_farm_autounits_autowendacurse_toggle = ui_farm_autounits_groupbox:AddToggle("wenda_curse_toggle",{Text="Wenda Curse?",Default = false,Tooltip="Changes delay to 8 seconds instead of 15"})
+local ui_farm_autounits_autowendamanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_wenda_delay_toggle",{Text="Manual Wenda Delay",Default = false,Tooltip="Manually control the delay"})
+local ui_farm_autounits_autowendamanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_wenda_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
+
+local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupbox("Farm Settings")
+--TODO: Add built-in auto portal choose for summer portals
 
 -- Misc Functions//
 local function checkJSON(str)
@@ -215,7 +177,11 @@ end
 function string_insert(str1, str2, pos) return str1:sub(1,pos)..str2..str1:sub(pos+1) end
 local function cfgbeautify(str) return string.gsub(string.gsub(str,"r1sIngHub"..[[\]].."Anime Adventures"..[[\]],""),".json","") end
 local function isdotjson(file) return string.sub(file, -5) == ".json" end
+local function string_to_cframe(str) return CFrame.new(table.unpack(str:gsub(" ",""):split(","))) end
+local function string_to_vector3(str) return Vector3.new(table.unpack(str:gsub(" ",""):split(","))) end
 local config_ignore_list = {"macro_create_input", "MenuKeybind", "macro_record_toggle"}
+
+-- Config Functions/
 local function Save_Configuration()
     local options_table = {toggle_table = {}, map_dropdowns = {}, input_table = {}}
     for option_name, val in pairs(getgenv().Options) do
@@ -234,25 +200,31 @@ local function Save_Configuration()
     writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
 end
 local function Load_Configuration()
-    local config_file 
-    config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
-    for option_name, val in pairs(config_file) do
-        if option_name == "toggle_table" and val then
-            for toggle_name, toggle_value in pairs(val) do
-                getgenv().Toggles[toggle_name]:SetValue(toggle_value)
-            end
-        elseif option_name == "map_dropdowns" and val then
-            for dropdown_name, dropdown_value in pairs(val) do
-                getgenv().Options[dropdown_name]:SetValue(dropdown_value)
-            end
-        else
-            local option = getgenv().Options[option_name]
-            if option and val then
-                option:SetValue(val)
+    local success, err = pcall(function()
+        local config_file 
+        config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
+        for option_name, val in pairs(config_file) do
+            if option_name == "toggle_table" and val then
+                for toggle_name, toggle_value in pairs(val) do
+                    getgenv().Toggles[toggle_name]:SetValue(toggle_value)
+                end
+            elseif option_name == "map_dropdowns" and val then
+                for dropdown_name, dropdown_value in pairs(val) do
+                    getgenv().Options[dropdown_name]:SetValue(dropdown_value)
+                end
+            else
+                local option = getgenv().Options[option_name]
+                if option and val then
+                    option:SetValue(val)
+                end
             end
         end
+    end)
+    if err then
+        error("CONFIGURATION LOADING ERROR:\n"..err)
     end
 end
+--\
 local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
 local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
 ui_settings_lefttabbox_ui:AddButton("Unload", function()
@@ -279,6 +251,7 @@ for _,file in ipairs(filelist) do
 end
 
 local equipped_units = {}
+local player_unit_inventory = {}
 for i,v in pairs(getgc(true)) do
     if type(v) == "table" and rawget(v, "xp") then
         if v["equipped_slot"] then
@@ -287,8 +260,8 @@ for i,v in pairs(getgc(true)) do
         end
     end
 end
-local player_unit_inventory = {}
-for i,v in pairs(getgc(true)) do
+local player_unit_inventory_gc = getgc(true)
+for i,v in pairs(player_unit_inventory_gc) do
     if type(v) == "table" and rawget(v, "xp") then
         table.insert(player_unit_inventory, v)
     end
@@ -404,7 +377,7 @@ end
 
 local function Choose_Macro(macro_name)
     if type(macro_name) ~= "string" or macro_name == "" then return end
-    if not isfile("r1sIngHub/Anime Adventures/"..macro_name..".json") then
+    if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..macro_name..".json") then
         getgenv().Options.current_macro_dropdown:SetValues()
         update_map_dropdowns()
         return
@@ -436,7 +409,7 @@ local function Choose_Macro(macro_name)
     update_map_dropdowns()
 end
 ui_macro_choosemacro:OnChanged(function()
-    Choose_Macro(getgenv().Options.current_macro_dropdown.Value)
+    Choose_Macro(ui_macro_choosemacro.Value)
 end)
 
 local function Create_Macro(macro_name)
@@ -451,25 +424,9 @@ local function Create_Macro(macro_name)
     end
 end
 ui_create_macro_input:OnChanged(function()
-    if getgenv().Options.macro_create_input.Value == "" or not getgenv().Options.macro_create_input.Value then return end
-    Create_Macro(getgenv().Options.macro_create_input.Value)
+    if ui_create_macro_input.Value == "" or not ui_create_macro_input.Value then return end
+    Create_Macro(ui_create_macro_input.Value)
 end)
-
-local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupbox("Farm Settings")
-
-local ui_farm_autounits_groupbox = ui_tabs.farm_settings:AddRightGroupbox("Auto Units")
-local ui_farm_autounits_autohomura_toggle = ui_farm_autounits_groupbox:AddToggle("auto_homura_toggle",{Text="Auto Homura",Default = false,Tooltip="Homura will timestop if she has an enemy in range."})
-local ui_farm_autounits_buffdivider = ui_farm_autounits_groupbox:AddDivider()
-local ui_farm_autounits_bufflabel = ui_farm_autounits_groupbox:AddLabel("Buff")
-local ui_farm_autounits_autoerwin_toggle = ui_farm_autounits_groupbox:AddToggle("auto_erwin_toggle",{Text="Auto Erwin 100%",Default = false,Tooltip="Auto Erwin buff 100%"})
-local ui_farm_autounits_autoerwincurse_toggle = ui_farm_autounits_groupbox:AddToggle("erwin_curse_toggle",{Text="Erwin Curse?",Default = false,Tooltip="Changes delay to 8 seconds instead of 15"})
-local ui_farm_autounits_autoerwinmanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_erwin_delay_toggle",{Text="Manual Erwin Delay",Default = false,Tooltip="Manually control the delay"})
-local ui_farm_autounits_autoerwinmanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_erwin_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
-local ui_farm_autounits_erwinwenda_divider = ui_farm_autounits_groupbox:AddDivider()
-local ui_farm_autounits_autowenda_toggle = ui_farm_autounits_groupbox:AddToggle("auto_wenda_toggle",{Text="Auto Wenda 100%",Default = false,Tooltip="Auto Wenda buff 100%"})
-local ui_farm_autounits_autowendacurse_toggle = ui_farm_autounits_groupbox:AddToggle("wenda_curse_toggle",{Text="Wenda Curse?",Default = false,Tooltip="Changes delay to 8 seconds instead of 15"})
-local ui_farm_autounits_autowendamanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_wenda_delay_toggle",{Text="Manual Wenda Delay",Default = false,Tooltip="Manually control the delay"})
-local ui_farm_autounits_autowendamanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_wenda_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
 Load_Configuration()
 local function auto_homura()
     while task.wait() do
@@ -587,20 +544,13 @@ local function get_unit_data_by_uuid(unit_uuid)
     end
 end
 
-local function string_to_cframe(str)
-    return CFrame.new(table.unpack(str:gsub(" ",""):split(",")))
-end
-local function string_to_vector3(str)
-    return Vector3.new(table.unpack(str:gsub(" ",""):split(",")))
-end
-
 local macro_playing = false
 local function Play_Macro()
     if game.PlaceId == 8304191830 then lib:Notify("You can't play macro in a lobby, dumbo.") return end
     if chosen_macro_contents == nil then lib:Notify("Choose a macro first.") return end
     if type(chosen_macro_contents) ~= "table" then lib:Notify("This macro is broken or empty.") return end
     macro_playing = true
-    task.spawn(function()
+    local success, err = pcall(function()
         local totalSteps = chosen_macro_contents[2]
         local stepTable = chosen_macro_contents[1]
         for i = 1, totalSteps do
@@ -661,6 +611,9 @@ local function Play_Macro()
         lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
         ui_macro_play_progress_label:SetText("Progress: COMPLETED")
     end)
+    if err then
+        warn("MACRO PLAY ERROR CAUGHT:\n"..err)
+    end
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -719,7 +672,6 @@ local on_namecall = function(object, ...)
             current_macro_record_data[""..current_record_step] = {type = "spawn_unit", money = unit_cost, unit = unit_data["unit_id"], cframe = tostring(unit_cframe)}
             current_record_step += 1
         end
-
         if object.Name == "upgrade_unit_ingame" then
             local unit_obj = args[1]
             local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
@@ -732,10 +684,8 @@ local on_namecall = function(object, ...)
             current_macro_record_data[""..current_record_step] = {type = "upgrade_unit_ingame", money = unit_upgrade_cost, pos = tostring(unit_obj._hitbox.Position)}
             current_record_step += 1
         end
-
         if object.Name == "sell_unit_ingame" then
             local unit_obj = args[1]
-            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
             local unit_pos = unit_obj._hitbox.CFrame
             current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
             current_record_step += 1
