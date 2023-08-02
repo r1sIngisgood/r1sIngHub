@@ -13,7 +13,7 @@ task.wait(3)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
 if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
-if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", HttpService:JSONEncode()) end
+if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", HttpService:JSONEncode({})) end
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
@@ -235,9 +235,7 @@ local function Save_Configuration()
 end
 local function Load_Configuration()
     local config_file 
-    pcall(function()
-        config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
-    end)
+    config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
     for option_name, val in pairs(config_file) do
         warn(option_name.." : "..tostring(val))
         if option_name == "toggle_table" and val then
@@ -647,7 +645,7 @@ local function Play_Macro()
                 local unit_obj
                 for _, unit in pairs(workspace._UNITS:GetChildren()) do
                     if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                        if (unit._hitbox.Position - unit_pos).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
+                        if (unit._hitbox.Position - unit_pos.Position).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
                             unit_obj = unit
                         end
                     end
@@ -660,6 +658,7 @@ local function Play_Macro()
         lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
         ui_macro_play_progress_label:SetText("Progress: COMPLETED")
     end)
+    Save_Configuration()
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -667,7 +666,6 @@ ui_macro_play_toggle:OnChanged(function()
     else
         macro_playing = false
     end
-    Save_Configuration()
 end)
 
 Load_Configuration()
