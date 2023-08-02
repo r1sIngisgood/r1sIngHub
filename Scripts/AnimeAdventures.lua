@@ -234,7 +234,10 @@ local function Save_Configuration()
     writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
 end
 local function Load_Configuration()
-    local config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
+    local config_file 
+    pcall(function()
+        config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
+    end)
     for option_name, val in pairs(config_file) do
         warn(option_name.." : "..tostring(val))
         if option_name == "toggle_table" and val then
@@ -560,10 +563,9 @@ end
 task.spawn(coroutine.wrap(auto_erwin))
 
 -- MACRO PLAYING
-local function get_unit_data_by_name(unit_name)
+local function get_unit_data_by_id(unit_id)
     for i,v in pairs(equipped_units) do
-        if v["unit_id"] == unit_name then
-            warn(unit_name.." was found")
+        if v["unit_id"] == unit_id then
             return v
         end
     end
@@ -603,7 +605,7 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task)
             if cur_task == "spawn_unit" then
                 local spawn_unit = stepTable[""..i]["unit"]
-                local spawn_unit_data = get_unit_data_by_name(spawn_unit)
+                local spawn_unit_data = get_unit_data_by_id(spawn_unit)
                 local spawn_cframe = string_to_cframe(stepTable[""..i]["cframe"])
                 local spawn_cost = stepTable[""..i]["money"]
                 ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..stepTable[""..i]["unit"])
@@ -711,12 +713,7 @@ local on_namecall = function(object, ...)
 
         if object.Name == "upgrade_unit_ingame" then
             local unit_obj = args[1]
-            local unit_data = get_unit_data_by_name(unit_obj.Name)
-            warn(tostring(unit_data).."   <<<RAY ZASKRIN")
-            if string.find(unit_obj.Name, "homura") then
-                local sd = HttpService:JSONEncode(unit_data)
-                writefile("HOMURA_DATA", sd)
-            end
+            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
             local unit_upgrade_cost
             for i,v in pairs(units_module) do
                 if v["id"] == unit_data["unit_id"] then
@@ -729,7 +726,7 @@ local on_namecall = function(object, ...)
 
         if object.Name == "sell_unit_ingame" then
             local unit_obj = args[1]
-            local unit_data = get_unit_data_by_name(unit_obj.Name)
+            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
             local unit_pos = unit_obj._hitbox.CFrame
             current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
             current_record_step += 1
