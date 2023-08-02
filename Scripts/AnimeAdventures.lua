@@ -616,9 +616,9 @@ local function Play_Macro()
                 local spawn_unit_data = get_unit_data_by_id(spawn_unit)
                 local spawn_cframe = string_to_cframe(stepTable[""..i]["cframe"])
                 local spawn_cost = stepTable[""..i]["money"]
-                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..stepTable[""..i]["unit"])
+                ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
                 if plr_resource_val.Value < spawn_cost then
-                    ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..stepTable[""..i]["unit"].."\nWaiting for: "..spawn_cost.." Y")
+                    ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
                     repeat task.wait() until plr_resource_val.Value >= spawn_cost
                 end
                 remote_place:InvokeServer(spawn_unit_data["uuid"], spawn_cframe)
@@ -635,9 +635,9 @@ local function Play_Macro()
                         end
                     end
                 end
-                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
+                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
                 if plr_resource_val.Value < unit_upgrade_cost then
-                    ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name.."\nWaiting for: "..unit_upgrade_cost.." Y")
+                    ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
                     repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
                 end
                 remote_upgrade_ingame:InvokeServer(unit_obj)
