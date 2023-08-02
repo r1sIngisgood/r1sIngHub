@@ -13,7 +13,7 @@ task.wait(3)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
 if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
-if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", "") end
+if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", HttpService:JSONEncode()) end
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
@@ -256,6 +256,14 @@ local function Load_Configuration()
         end
     end
 end
+local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
+local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
+ui_settings_lefttabbox_ui:AddButton("Unload", function()
+    lib:Unload()
+    Save_Configuration()
+end)
+ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
+lib.ToggleKeybind = getgenv().Options.MenuKeybind
 --\\
 
 -- Macro //
@@ -652,7 +660,6 @@ local function Play_Macro()
         lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
         ui_macro_play_progress_label:SetText("Progress: COMPLETED")
     end)
-    Save_Configuration()
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -660,6 +667,7 @@ ui_macro_play_toggle:OnChanged(function()
     else
         macro_playing = false
     end
+    Save_Configuration()
 end)
 
 Load_Configuration()
@@ -809,15 +817,6 @@ task.spawn(function()
 end)
 --\\
 
-local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
-local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
-ui_settings_lefttabbox_ui:AddButton("Unload", function()
-    lib:Unload()
-    Save_Configuration()
-end)
-ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
-lib.ToggleKeybind = getgenv().Options.MenuKeybind
-
 task.spawn(function()
     task.wait(5)
     for _, macro_dropdown in pairs(map_dropdowns) do
@@ -826,7 +825,7 @@ task.spawn(function()
         end)
     end
     while not lib.Unloaded do
-        task.wait(10)
+        task.wait(5)
         Save_Configuration()
     end
 end)
