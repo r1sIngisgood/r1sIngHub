@@ -705,6 +705,7 @@ local on_namecall = function(object, ...)
     local args = {...}
     if object.Name ~= "CharacterSoundEvent" and method:match("Server") and isRemoteMethod and ui_macro_record_toggle.Value and lib.Unloaded ~= true then
         if object.Name == "spawn_unit" then
+            warn(tostring(args[1]))
             local unit_data = get_unit_data_by_uuid(args[1])
             local unit_cframe = args[2]
             local unit_cost
