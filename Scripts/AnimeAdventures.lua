@@ -13,7 +13,7 @@ task.wait(3)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
 if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
-if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json", HttpService:JSONEncode({})) end
+if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json") then writefile("r1sIngHub"..[[\]].."configs"..[[\]]..""..Players.LocalPlayer.Name.."_AnimeAdventures.json","") end
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
@@ -237,7 +237,6 @@ local function Load_Configuration()
     local config_file 
     config_file = HttpService:JSONDecode(readfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json"))
     for option_name, val in pairs(config_file) do
-        warn(option_name.." : "..tostring(val))
         if option_name == "toggle_table" and val then
             for toggle_name, toggle_value in pairs(val) do
                 getgenv().Toggles[toggle_name]:SetValue(toggle_value)
@@ -258,6 +257,7 @@ local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
 local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
 ui_settings_lefttabbox_ui:AddButton("Unload", function()
     lib:Unload()
+    lib.Unloaded = true
     Save_Configuration()
 end)
 ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
@@ -427,13 +427,13 @@ local function Choose_Macro(macro_name)
             string_for_ui = string_for_ui..i..": "..v.."\n"
         end
         ui_macro_units_list_label:SetText(string_for_ui)
+        Save_Configuration()
     else
         chosen_macro_contents = ""
         ui_macro_units_list_label:SetText("Units List:")
         lib:Notify("This macro is empty (or broken). Just letting you know.")
     end
     update_map_dropdowns()
-    Save_Configuration()
 end
 ui_macro_choosemacro:OnChanged(function()
     Choose_Macro(getgenv().Options.current_macro_dropdown.Value)
@@ -470,6 +470,7 @@ local ui_farm_autounits_autowenda_toggle = ui_farm_autounits_groupbox:AddToggle(
 local ui_farm_autounits_autowendacurse_toggle = ui_farm_autounits_groupbox:AddToggle("wenda_curse_toggle",{Text="Wenda Curse?",Default = false,Tooltip="Changes delay to 8 seconds instead of 15"})
 local ui_farm_autounits_autowendamanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_wenda_delay_toggle",{Text="Manual Wenda Delay",Default = false,Tooltip="Manually control the delay"})
 local ui_farm_autounits_autowendamanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_wenda_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
+Load_Configuration()
 local function auto_homura()
     while task.wait() do
         if ui_farm_autounits_autohomura_toggle.Value and not value_is_lobby.Value then
@@ -658,7 +659,6 @@ local function Play_Macro()
         lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
         ui_macro_play_progress_label:SetText("Progress: COMPLETED")
     end)
-    Save_Configuration()
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -667,9 +667,6 @@ ui_macro_play_toggle:OnChanged(function()
         macro_playing = false
     end
 end)
-
-Load_Configuration()
-
 -- MACRO RECORDING
 local game_metatable = getrawmetatable(game)
 local game_namecall = game_metatable.__namecall
@@ -689,7 +686,6 @@ ui_macro_record_toggle:OnChanged(function()
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..tostring(getgenv().Options.current_macro_dropdown.Value)..".json") or not getgenv().Options.current_macro_dropdown.Value then return end
         local new_file_content = HttpService:JSONEncode(current_macro_record_data)
         writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json", new_file_content)
-        Save_Configuration()
     else
         if not getgenv().Options.current_macro_dropdown.Value then lib:Notify("Choose a macro first!") return end
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json") then
@@ -803,7 +799,7 @@ end)
 -- Misc//
 local antiAfkConnection
 task.spawn(function()
-    antiAfkConnection = Players.localPlayer.Idled:Connect(function()
+    antiAfkConnection = Players.LocalPlayer.Idled:Connect(function()
         VirtualUser:Button2Down(Vector2.new(), workspace.CurrentCamera.CFrame)
         task.wait(1)
         VirtualUser:Button2Up(Vector2.new(), workspace.CurrentCamera.CFrame)
@@ -819,11 +815,17 @@ task.spawn(function()
     task.wait(5)
     for _, macro_dropdown in pairs(map_dropdowns) do
         macro_dropdown:OnChanged(function()
-            Save_Configuration()
+            if macro_dropdown.Value ~= false then
+                Save_Configuration()
+            end
         end)
     end
-    while not lib.Unloaded do
-        task.wait(5)
-        Save_Configuration()
+    while true do
+        if not lib.Unloaded then
+            task.wait(5)
+            Save_Configuration()
+        else
+            break
+        end
     end
 end)
