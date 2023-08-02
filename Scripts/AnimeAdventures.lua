@@ -605,8 +605,7 @@ local function Play_Macro()
         local stepTable = chosen_macro_contents[1]
         for i = 1, totalSteps do
             if not macro_playing then break end
-            warn(tostring(getgenv().Options.macro_play_stepdelay_slider.Value + 0.2))
-            task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.2)
+            task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
             local plr_stats = Players.LocalPlayer._stats
             local plr_resource_val = plr_stats.resource
             local cur_task = stepTable[""..i]["type"] or "?"
