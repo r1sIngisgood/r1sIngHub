@@ -562,7 +562,8 @@ task.spawn(coroutine.wrap(auto_erwin))
 -- MACRO PLAYING
 local function get_unit_data_by_name(unit_name)
     for i,v in pairs(equipped_units) do
-        if v.unit_id == unit_name then
+        if v["unit_id"] == unit_name then
+            warn(unit_name.." was found")
             return v
         end
     end
@@ -711,6 +712,7 @@ local on_namecall = function(object, ...)
         if object.Name == "upgrade_unit_ingame" then
             local unit_obj = args[1]
             local unit_data = get_unit_data_by_name(unit_obj.Name)
+            warn(unit_data.."   <<<RAY ZASKRIN")
             if string.find(unit_obj.Name, "homura") then
                 local sd = HttpService:JSONEncode(unit_data)
                 writefile("HOMURA_DATA", sd)
