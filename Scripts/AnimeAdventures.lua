@@ -441,8 +441,8 @@ end)
 
 local function Create_Macro(macro_name)
     if type(macro_name) ~= "string" or macro_name == "" then return end
-    if not isfile("r1sIngHub/Anime Adventures/"..macro_name..".json") then
-        writefile("r1sIngHub/Anime Adventures/"..macro_name..".json", "")
+    if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..macro_name..".json") then
+        writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..macro_name..".json", "")
         table.insert(getgenv().Options.current_macro_dropdown.Values, macro_name)
         getgenv().Options.current_macro_dropdown:SetValues()
         getgenv().Options.current_macro_dropdown:SetValue(macro_name)
@@ -681,11 +681,14 @@ makewriteable()
 
 local current_record_step = 1
 local current_macro_record_data = {}
+local last_record_state = false
 ui_macro_record_toggle:OnChanged(function()
     if getgenv().Toggles.macro_record_toggle.Value == false then
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..tostring(getgenv().Options.current_macro_dropdown.Value)..".json") or not getgenv().Options.current_macro_dropdown.Value then return end
+        if last_record_state == false then return end
         local new_file_content = HttpService:JSONEncode(current_macro_record_data)
         writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json", new_file_content)
+        last_record_state = false
     else
         if not getgenv().Options.current_macro_dropdown.Value then lib:Notify("Choose a macro first!") return end
         if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json") then
@@ -693,6 +696,7 @@ ui_macro_record_toggle:OnChanged(function()
             lib:Notify("File doesnt exist?")
             return
         end
+        last_record_state = true
     end
 end)
 local on_namecall = function(object, ...)
