@@ -622,6 +622,7 @@ local function Play_Macro()
                     repeat task.wait() until plr_resource_val.Value > spawn_cost
                 end
                 remote_place:InvokeServer(spawn_unit_data["uuid"], spawn_cframe)
+                warn(tostring(spawn_unit_data["uuid"])..", "..tostring(spawn_cframe))
             end
             if cur_task == "upgrade_unit_ingame" then
                 local unit_upgrade_cost = stepTable[""..i]["money"]
