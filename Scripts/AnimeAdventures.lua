@@ -793,6 +793,7 @@ end
 task.spawn(function()
     task.wait(3)
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
+        task.wait(3)
         Play_Macro()
     end
     if value_voting_finished ~= nil then
