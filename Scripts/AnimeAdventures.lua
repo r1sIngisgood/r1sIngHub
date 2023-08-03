@@ -9,7 +9,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local HttpService = game:GetService("HttpService")
 --\\
 
-task.wait(3)
+task.wait(6)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
 if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
@@ -63,6 +63,13 @@ local remote_sell_unit_ingame = client_to_server_folder["sell_unit_ingame"]
 local remote_use_active_attack = client_to_server_folder["use_active_attack"]
 local remote_get_level_data = workspace:FindFirstChild("_MAP_CONFIG"):FindFirstChild("GetLevelData")
 local remote_vote_start = client_to_server_folder["vote_start"]
+task.spawn(function()
+    if value_voting_finished ~= nil then
+        repeat task.wait(1)
+            remote_vote_start:InvokeServer()
+        until value_voting_finished == true
+    end
+end)
 local current_map
 if remote_get_level_data then
     current_map = remote_get_level_data:InvokeServer()
@@ -183,21 +190,26 @@ local config_ignore_list = {"macro_create_input", "MenuKeybind", "macro_record_t
 
 -- Config Functions/
 local function Save_Configuration()
-    local options_table = {toggle_table = {}, map_dropdowns = {}, input_table = {}}
-    for option_name, val in pairs(getgenv().Options) do
-        if string.find(option_name, "macro_map") and not table.find(config_ignore_list, option_name) then
-            options_table.map_dropdowns[option_name] = val.Value
-        elseif not string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
-            options_table[option_name] = val.Value
-        elseif string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
-            options_table.input_table[option_name] = ""..val.Value
+    local success, err = pcall(function()
+        local options_table = {toggle_table = {}, map_dropdowns = {}, input_table = {}}
+        for option_name, val in pairs(getgenv().Options) do
+            if string.find(option_name, "macro_map") and not table.find(config_ignore_list, option_name) then
+                options_table.map_dropdowns[option_name] = val.Value
+            elseif not string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
+                options_table[option_name] = val.Value
+            elseif string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
+                options_table.input_table[option_name] = ""..val.Value
+            end
         end
+        for toggle_name, val in pairs(getgenv().Toggles) do
+            options_table.toggle_table[toggle_name] = val.Value
+        end
+        local jsonencoded_options_table = HttpService:JSONEncode(options_table)
+        writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
+    end)
+    if err then
+        error("CONFIG SAVE ERROR:\n"..err)
     end
-    for toggle_name, val in pairs(getgenv().Toggles) do
-        options_table.toggle_table[toggle_name] = val.Value
-    end
-    local jsonencoded_options_table = HttpService:JSONEncode(options_table)
-    writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
 end
 local function Load_Configuration()
     local success, err = pcall(function()
@@ -221,7 +233,7 @@ local function Load_Configuration()
         end
     end)
     if err then
-        error("CONFIGURATION LOADING ERROR:\n"..err)
+        error("CONFIG LOADING ERROR:\n"..err)
     end
 end
 --\
@@ -252,20 +264,23 @@ end
 
 local equipped_units = {}
 local player_unit_inventory = {}
-for i,v in pairs(getgc(true)) do
-    if type(v) == "table" and rawget(v, "xp") then
-        if v["equipped_slot"] then
-            table.insert(equipped_units, v)
-            
+repeat
+    for i,v in pairs(getgc(true)) do
+        if type(v) == "table" and rawget(v, "xp") then
+            if v["equipped_slot"] then
+                table.insert(equipped_units, v)
+            end
         end
     end
-end
-local player_unit_inventory_gc = getgc(true)
-for i,v in pairs(player_unit_inventory_gc) do
+until #equipped_units > 0
+
+repeat
+for i,v in pairs(getgc(true)) do
     if type(v) == "table" and rawget(v, "xp") then
         table.insert(player_unit_inventory, v)
     end
 end
+until #player_unit_inventory > 0
 
 local ui_macro_leftgroupbox = ui_tabs.macro:AddLeftGroupbox("Macro Config")
 local ui_macro_choosemacro = ui_macro_leftgroupbox:AddDropdown("current_macro_dropdown", {
@@ -529,6 +544,7 @@ task.spawn(coroutine.wrap(auto_erwin))
 -- MACRO PLAYING
 local function get_unit_data_by_id(unit_id)
     for i,v in pairs(equipped_units) do
+        warn(tostring(v["unit_id"].." : "..tostring(unit_id)))
         if v["unit_id"] == unit_id then
             return v
         end
@@ -550,70 +566,69 @@ local function Play_Macro()
     if chosen_macro_contents == nil then lib:Notify("Choose a macro first.") return end
     if type(chosen_macro_contents) ~= "table" then lib:Notify("This macro is broken or empty.") return end
     macro_playing = true
-    local success, err = pcall(function()
-        local totalSteps = chosen_macro_contents[2]
-        local stepTable = chosen_macro_contents[1]
-        for i = 1, totalSteps do
-            warn(macro_playing)
-            if not macro_playing then break end
-            task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
-            local plr_stats = Players.LocalPlayer._stats
-            local plr_resource_val = plr_stats.resource
-            local cur_task = stepTable[""..i]["type"] or "?"
-            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task)
-            if cur_task == "spawn_unit" then
-                local spawn_unit = stepTable[""..i]["unit"]
-                local spawn_unit_data = get_unit_data_by_id(spawn_unit)
-                local spawn_cframe = string_to_cframe(stepTable[""..i]["cframe"])
-                local spawn_cost = stepTable[""..i]["money"]
-                ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
-                if plr_resource_val.Value < spawn_cost then
-                    ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
-                    repeat task.wait() until plr_resource_val.Value > spawn_cost
-                end
-                remote_place:InvokeServer(spawn_unit_data["uuid"], spawn_cframe)
-                warn(tostring(spawn_unit_data["uuid"])..", "..tostring(spawn_cframe))
+    local totalSteps = chosen_macro_contents[2]
+    local stepTable = chosen_macro_contents[1]
+    for i = 1, totalSteps do
+        warn(tostring(i).." : "..tostring(totalSteps))
+        if not macro_playing then break end
+        task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
+        local plr_stats = Players.LocalPlayer._stats
+        local plr_resource_val = plr_stats.resource
+        local cur_task = stepTable[""..i]["type"] or "?"
+        ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task)
+        if cur_task == "spawn_unit" then
+            local spawn_unit = stepTable[""..i]["unit"]
+            local unit_data = get_unit_data_by_id(spawn_unit)
+            local spawn_cframe = string_to_cframe(stepTable[""..i]["cframe"])
+            local spawn_cost = stepTable[""..i]["money"]
+            ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
+            if plr_resource_val.Value < spawn_cost then
+                ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
+                repeat task.wait() until plr_resource_val.Value >= spawn_cost
             end
-            if cur_task == "upgrade_unit_ingame" then
-                local unit_upgrade_cost = stepTable[""..i]["money"]
-                local unit_pos = string_to_vector3(stepTable[""..i]["pos"])
-                local unit_obj
-                
-                for _, unit in pairs(workspace._UNITS:GetChildren()) do
-                    if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                        if (unit._hitbox.Position - unit_pos).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
-                            unit_obj = unit
-                        end
-                    end
-                end
-                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
-                if plr_resource_val.Value < unit_upgrade_cost then
-                    ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
-                    repeat task.wait() until plr_resource_val.Value > unit_upgrade_cost
-                end
-                remote_upgrade_ingame:InvokeServer(unit_obj)
-            end
-            if cur_task == "sell_unit_ingame" then
-                local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
-                local unit_obj
-                for _, unit in pairs(workspace._UNITS:GetChildren()) do
-                    if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                        if (unit._hitbox.Position - unit_pos.Position).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
-                            unit_obj = unit
-                        end
-                    end
-                end
-                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
-                remote_sell_ingame:InvokeServer(unit_obj)
-            end
+            remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
         end
-        macro_playing = false
-        lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
-        ui_macro_play_progress_label:SetText("Progress: COMPLETED")
-    end)
-    if err then
-        warn("MACRO PLAY ERROR CAUGHT:\n"..err)
+        if cur_task == "upgrade_unit_ingame" then
+            local unit_upgrade_cost
+            local unit_pos = string_to_vector3(stepTable[""..i]["pos"])
+            local unit_obj
+            for _, unit in pairs(workspace._UNITS:GetChildren()) do
+                if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
+                    if (unit._hitbox.Position - unit_pos).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
+                        unit_obj = unit
+                    end
+                end
+            end
+            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
+            for _,v in pairs(units_module) do
+                if v["id"] == unit_data["unit_id"] then
+                    unit_upgrade_cost = v["upgrade"][unit_obj._stats.upgrade.Value + 1]["cost"]
+                end
+            end
+            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
+            if plr_resource_val.Value < unit_upgrade_cost then
+                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
+                repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
+            end
+            remote_upgrade_ingame:InvokeServer(unit_obj)
+        end
+        if cur_task == "sell_unit_ingame" then
+            local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
+            local unit_obj
+            for _, unit in pairs(workspace._UNITS:GetChildren()) do
+                if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
+                    if (unit._hitbox.Position - unit_pos.Position).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
+                        unit_obj = unit
+                    end
+                end
+            end
+            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
+            remote_sell_ingame:InvokeServer(unit_obj)
+        end
     end
+    macro_playing = false
+    lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
+    ui_macro_play_progress_label:SetText("Progress: COMPLETED")
 end
 ui_macro_play_toggle:OnChanged(function()
     if getgenv().Toggles.macro_play_toggle.Value then
@@ -655,12 +670,11 @@ ui_macro_record_toggle:OnChanged(function()
     end
 end)
 local on_namecall = function(object, ...)
+    local args = {...}
     local method = tostring(getnamecallmethod())
     local isRemoteMethod = method == "FireServer" or method == "InvokeServer"
-    local args = {...}
     if object.Name ~= "CharacterSoundEvent" and method:match("Server") and isRemoteMethod and ui_macro_record_toggle.Value and lib.Unloaded ~= true then
         if object.Name == "spawn_unit" then
-            warn(tostring(args[1]))
             local unit_data = get_unit_data_by_uuid(args[1])
             local unit_cframe = args[2]
             local unit_cost
@@ -739,20 +753,12 @@ if remote_get_level_data then
     end
 end
 
---\\
 task.spawn(function()
-    task.wait(3)
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
         task.wait(3)
         Play_Macro()
     end
-    if value_voting_finished ~= nil then
-        repeat task.wait(1)
-            remote_vote_start:InvokeServer()
-        until value_voting_finished == true
-    end
 end)
---//
 
 -- Misc//
 local antiAfkConnection
