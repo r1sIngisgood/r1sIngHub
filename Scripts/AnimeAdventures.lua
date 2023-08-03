@@ -653,23 +653,28 @@ local function Play_Macro()
             local unit_obj
             for _, unit in pairs(workspace._UNITS:GetChildren()) do
                 if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                    if (unit._hitbox.Position - unit_pos).Magnitude <= 1 and unit._stats.player.Value == Players.LocalPlayer then
+                    if (unit._hitbox.Position - unit_pos).Magnitude <= 1.5 and unit._stats.player.Value == Players.LocalPlayer then
                         unit_obj = unit
                     end
                 end
             end
-            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
-            for _,v in pairs(units_module) do
-                if v["id"] == unit_data["unit_id"] then
-                    unit_upgrade_cost = v["upgrade"][unit_obj._stats.upgrade.Value + 1]["cost"]
+            local unit_stats = unit_obj:FindFirstChild("_stats")
+            if unit_obj and unit_stats then
+                local unit_data = get_unit_data_by_id(unit_stats.id.Value)
+                for _,v in pairs(units_module) do
+                    if v["id"] == unit_data["unit_id"] then
+                        unit_upgrade_cost = v["upgrade"][unit_stats.upgrade.Value + 1]["cost"]
+                    end
                 end
+                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
+                if plr_resource_val.Value < unit_upgrade_cost then
+                    ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
+                    repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
+                end
+                remote_upgrade_ingame:InvokeServer(unit_obj)
+            else
+                warn("Ray, kak ti eto delaesh, zaebal")
             end
-            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
-            if plr_resource_val.Value < unit_upgrade_cost then
-                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
-                repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
-            end
-            remote_upgrade_ingame:InvokeServer(unit_obj)
         end
         if cur_task == "sell_unit_ingame" then
             local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
