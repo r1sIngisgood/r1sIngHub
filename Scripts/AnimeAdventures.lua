@@ -9,7 +9,6 @@ local VirtualUser = game:GetService("VirtualUser")
 local HttpService = game:GetService("HttpService")
 --\\
 
-task.wait(6)
 if not isfolder("r1sIngHub") then makefolder("r1sIngHub") end
 if not isfolder("r1sIngHub"..[[\]].."Anime Adventures") then makefolder("r1sIngHub"..[[\]].."Anime Adventures") end
 if not isfolder("r1sIngHub"..[[\]].."configs") then makefolder("r1sIngHub"..[[\]].."configs") end
@@ -17,6 +16,7 @@ if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
+task.wait(3)
 -- Game Stuff//
 local units_module = require(ReplicatedStorage.src.Data.Units)
 local maps_module = ReplicatedStorage.src.Data.Maps
@@ -42,9 +42,11 @@ for _,obj in pairs(maps_module:GetDescendants()) do
 end
 local workspace_data_folder = workspace:FindFirstChild("_DATA")
 local value_game_started = nil
+local value_game_finished = nil
 local value_voting_finished = nil
 if workspace_data_folder then
     value_game_started = workspace_data_folder:FindFirstChild("GameStarted")
+    value_game_finished = workspace_data_folder:FindFirstChild("GameFinished")
     local workspace_votestart_folder = workspace_data_folder:FindFirstChild("VoteStart")
     if workspace_votestart_folder then
         value_voting_finished = workspace_votestart_folder:WaitForChild("VotingFinished")
@@ -171,7 +173,14 @@ local ui_farm_autounits_autowendacurse_toggle = ui_farm_autounits_groupbox:AddTo
 local ui_farm_autounits_autowendamanual_toggle = ui_farm_autounits_groupbox:AddToggle("manual_wenda_delay_toggle",{Text="Manual Wenda Delay",Default = false,Tooltip="Manually control the delay"})
 local ui_farm_autounits_autowendamanual_slider = ui_farm_autounits_groupbox:AddSlider("manual_wenda_delay_slider", {Text="Manual Delay",Default = 15,Min=0,Max=15,Rounding=0,Compact=true})
 
-local ui_farm_settings_groupbox = ui_tabs.farm_settings:AddLeftGroupbox("Farm Settings")
+local ui_farm_settings_tabbox = ui_tabs.farm_settings:AddLeftTabbox()
+local ui_farm_settings_portals_tab = ui_farm_settings_tabbox:AddTab("Portals")
+local ui_farm_settings_portals_autoportal_toggle = ui_farm_settings_portals_tab:AddToggle("portals_autoportal_toggle",{Text="Enable Auto Next Portal",Default = false,Tooltip="Toggle Auto Next Portal Feature"})
+local ui_farm_settings_portals_portalid_input = ui_farm_settings_portals_tab:AddInput("portals_portalid_input",{Default="summer_portal",Numeric=false,Finished=true,Text="Portal Item Id",Placeholder="summer_portal for summer event"})
+local ui_farm_settings_portals_tiers_dropdown = ui_farm_settings_portals_tab:AddDropdown("portals_tiers_multidropdown",{Values={1,2,3,4,5,6,7,8,9,10,11,12},Default=0,Multi=true,Text="Portal Tiers",Tooltip="Choose what portal tiers you want to pick"})
+local ui_farm_settings_portals_ignoremods_dropdown = ui_farm_settings_portals_tab:AddDropdown("portals_ignoremods_multidropdown",{Values={"double_cost","fast_enemies","short_range","shield_enemies","tank_enemies"},Default=0,Multi=true,Text="Ignore Modifiers",Tooltip="Choose what modifiers you want to ignore"})
+local ui_farm_settings_portals_divider1 = ui_farm_settings_portals_tab:AddDivider()
+local ui_farm_settings_portals_help_label = ui_farm_settings_portals_tab:AddLabel("If you don't know what portal id to use here you go:\nSummer Event: summer_portal",true)
 --TODO: Add built-in auto portal choose for summer portals
 
 -- Misc Functions//
@@ -195,10 +204,12 @@ local function Save_Configuration()
         for option_name, val in pairs(getgenv().Options) do
             if string.find(option_name, "macro_map") and not table.find(config_ignore_list, option_name) then
                 options_table.map_dropdowns[option_name] = val.Value
-            elseif not string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
-                options_table[option_name] = val.Value
+            elseif string.find(option_name, "multidropdown") and not table.find(config_ignore_list, option_name) then
+                options_table[option_name] = val
             elseif string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
                 options_table.input_table[option_name] = ""..val.Value
+            elseif not table.find(config_ignore_list, option_name) then
+                options_table[option_name] = val.Value
             end
         end
         for toggle_name, val in pairs(getgenv().Toggles) do
@@ -233,7 +244,7 @@ local function Load_Configuration()
         end
     end)
     if err then
-        error("CONFIG LOADING ERROR:\n"..err)
+        error("CONFIG LOAD ERROR:\n"..err)
     end
 end
 --\
@@ -517,7 +528,7 @@ local function auto_erwin()
                 if ui_farm_autounits_autoerwincurse_toggle.Value then
                     delay = 8
                 else
-                    delay = 15
+                    delay = 15.4
                 end
             end
             local unitlist = {}
@@ -541,10 +552,55 @@ local function auto_erwin()
 end
 task.spawn(coroutine.wrap(auto_erwin))
 
+-- Auto Next Portal//
+local function get_portals_by_id(id)
+    local reg = getreg()
+    local portals = {}
+    for i,v in next, reg do
+        if type(v) == 'function' then
+            if getfenv(v).script then
+                for _, v in pairs(debug.getupvalues(v)) do
+                    if type(v) == 'table' then
+                        if v["session"] then
+                            for _, item in pairs(v["session"]["inventory"]['inventory_profile_data']['unique_items']) do
+                                if item["item_id"]:match(id) then
+                                    table.insert(portals, item)
+                                end
+                            end
+                            return portals
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local selected_portal = false
+task.spawn(function()
+    warn(value_game_finished.Value)
+    value_game_finished:GetPropertyChangedSignal("Value"):Connect(function()
+        warn(value_game_finished.Value)
+        if value_game_finished.Value and ui_farm_settings_portals_autoportal_toggle.Value then
+            for _,v in pairs(get_portals_by_id(getgenv().portals_portalid_input)) do
+                for b,x in pairs(getgenv().portals_tiers_multidropdown.Value) do
+                    if v['_unique_item_data']['_unique_portal_data']['portal_depth'] == tonumber(b) and not table.find(x, v['_unique_item_data']['_unique_portal_data']['challenge']) then
+                        if selected_portal == false then
+                            local args = {[1] = "replay",[2] = {["item_uuid"] = v["uuid"];}}
+                            game:GetService('ReplicatedStorage').endpoints.client_to_server.set_game_finished_vote:InvokeServer(unpack(args))
+                            selected_portal = true
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end)
+--\\
+
 -- MACRO PLAYING
 local function get_unit_data_by_id(unit_id)
     for i,v in pairs(equipped_units) do
-        warn(tostring(v["unit_id"].." : "..tostring(unit_id)))
         if v["unit_id"] == unit_id then
             return v
         end
@@ -569,7 +625,6 @@ local function Play_Macro()
     local totalSteps = chosen_macro_contents[2]
     local stepTable = chosen_macro_contents[1]
     for i = 1, totalSteps do
-        warn(tostring(i).." : "..tostring(totalSteps))
         if not macro_playing then break end
         task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
         local plr_stats = Players.LocalPlayer._stats
