@@ -579,13 +579,11 @@ local selected_portal = false
 task.spawn(function()
     if value_game_finished then
         value_game_finished:GetPropertyChangedSignal("Value"):Connect(function()
-            warn(value_game_finished.Value)
             if value_game_finished.Value and ui_farm_settings_portals_autoportal_toggle.Value then
                 task.wait(10)
                 local portal_ignore_list = {}
                 for z,b in pairs(ui_farm_settings_portals_tiers_dropdown.Value) do
                     portal_ignore_list[z] = ui_farm_settings_portals_ignoremods_dropdown.Value
-                    warn(tostring(z).." : "..tostring(ui_farm_settings_portals_ignoremods_dropdown.Value))
                 end
                 for _,v in pairs(get_portals_by_id(ui_farm_settings_portals_portalid_input.Value)) do
                     for b,x in pairs(portal_ignore_list) do
