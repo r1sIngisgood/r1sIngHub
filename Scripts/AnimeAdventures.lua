@@ -176,11 +176,11 @@ local ui_farm_autounits_autowendamanual_slider = ui_farm_autounits_groupbox:AddS
 local ui_farm_settings_tabbox = ui_tabs.farm_settings:AddLeftTabbox()
 local ui_farm_settings_portals_tab = ui_farm_settings_tabbox:AddTab("Portals")
 local ui_farm_settings_portals_autoportal_toggle = ui_farm_settings_portals_tab:AddToggle("portals_autoportal_toggle",{Text="Enable Auto Next Portal",Default = false,Tooltip="Toggle Auto Next Portal Feature"})
-local ui_farm_settings_portals_portalid_input = ui_farm_settings_portals_tab:AddInput("portals_portalid_input",{Default="summer_portal",Numeric=false,Finished=true,Text="Portal Item Id",Placeholder="summer_portal for summer event"})
-local ui_farm_settings_portals_tiers_dropdown = ui_farm_settings_portals_tab:AddDropdown("portals_tiers_multidropdown",{Values={1,2,3,4,5,6,7,8,9,10,11,12},Default=0,Multi=true,Text="Portal Tiers",Tooltip="Choose what portal tiers you want to pick"})
+local ui_farm_settings_portals_portalid_input = ui_farm_settings_portals_tab:AddInput("portals_portalid_input",{Default="portal_summer",Numeric=false,Finished=true,Text="Portal Item Id",Placeholder="portal_summer for summer event"})
+local ui_farm_settings_portals_tiers_dropdown = ui_farm_settings_portals_tab:AddDropdown("portals_tiers_multidropdown",{Values={'1','2','3','4','5','6','7','8','9','10','11','12'},Default=0,Multi=true,Text="Portal Tiers",Tooltip="Choose what portal tiers you want to pick"})
 local ui_farm_settings_portals_ignoremods_dropdown = ui_farm_settings_portals_tab:AddDropdown("portals_ignoremods_multidropdown",{Values={"double_cost","fast_enemies","short_range","shield_enemies","tank_enemies"},Default=0,Multi=true,Text="Ignore Modifiers",Tooltip="Choose what modifiers you want to ignore"})
 local ui_farm_settings_portals_divider1 = ui_farm_settings_portals_tab:AddDivider()
-local ui_farm_settings_portals_help_label = ui_farm_settings_portals_tab:AddLabel("If you don't know what portal id to use here you go:\nSummer Event: summer_portal",true)
+local ui_farm_settings_portals_help_label = ui_farm_settings_portals_tab:AddLabel("If you don't know what portal id to use here you go:\nSummer Event: portal_summer",true)
 --TODO: Add built-in auto portal choose for summer portals
 
 -- Misc Functions//
@@ -205,7 +205,7 @@ local function Save_Configuration()
             if string.find(option_name, "macro_map") and not table.find(config_ignore_list, option_name) then
                 options_table.map_dropdowns[option_name] = val.Value
             elseif string.find(option_name, "multidropdown") and not table.find(config_ignore_list, option_name) then
-                options_table[option_name] = val
+                options_table[option_name] = val.Value
             elseif string.find(option_name, "input") and not table.find(config_ignore_list, option_name) then
                 options_table.input_table[option_name] = ""..val.Value
             elseif not table.find(config_ignore_list, option_name) then
@@ -229,7 +229,9 @@ local function Load_Configuration()
         for option_name, val in pairs(config_file) do
             if option_name == "toggle_table" and val then
                 for toggle_name, toggle_value in pairs(val) do
-                    getgenv().Toggles[toggle_name]:SetValue(toggle_value)
+                    if getgenv().Toggles[toggle_name] then
+                        getgenv().Toggles[toggle_name]:SetValue(toggle_value)
+                    end
                 end
             elseif option_name == "map_dropdowns" and val then
                 for dropdown_name, dropdown_value in pairs(val) do
@@ -457,7 +459,6 @@ Load_Configuration()
 local function auto_homura()
     while task.wait() do
         if ui_farm_autounits_autohomura_toggle.Value and not value_is_lobby.Value then
-            print("auto_homura")
             local success,err = pcall(function()
                 repeat task.wait() until workspace:WaitForChild("_UNITS")
                 local plyr = Players.LocalPlayer
@@ -484,7 +485,6 @@ end)
 local function auto_wenda()
     while task.wait() do
         if ui_farm_autounits_autowenda_toggle.Value and not value_is_lobby.Value then
-            print("auto_wenda")
             local plr = Players.LocalPlayer
             local delay
             if ui_farm_autounits_autowendamanual_toggle.Value then
@@ -493,7 +493,7 @@ local function auto_wenda()
                 if ui_farm_autounits_autowendacurse_toggle.Value then
                     delay = 8
                 else
-                    delay = 15
+                    delay = 15.4
                 end
             end
             local unitlist = {}
@@ -519,7 +519,6 @@ task.spawn(coroutine.wrap(auto_wenda))
 local function auto_erwin()
     while task.wait() do
         if ui_farm_autounits_autoerwin_toggle.Value and not value_is_lobby.Value then
-            print("auto_erwin")
             local plr = Players.LocalPlayer
             local delay
             if ui_farm_autounits_autoerwinmanual_toggle.Value then
@@ -578,23 +577,30 @@ end
 
 local selected_portal = false
 task.spawn(function()
-    warn(value_game_finished.Value)
-    value_game_finished:GetPropertyChangedSignal("Value"):Connect(function()
-        warn(value_game_finished.Value)
-        if value_game_finished.Value and ui_farm_settings_portals_autoportal_toggle.Value then
-            for _,v in pairs(get_portals_by_id(getgenv().portals_portalid_input)) do
-                for b,x in pairs(getgenv().portals_tiers_multidropdown.Value) do
-                    if v['_unique_item_data']['_unique_portal_data']['portal_depth'] == tonumber(b) and not table.find(x, v['_unique_item_data']['_unique_portal_data']['challenge']) then
-                        if selected_portal == false then
-                            local args = {[1] = "replay",[2] = {["item_uuid"] = v["uuid"];}}
-                            game:GetService('ReplicatedStorage').endpoints.client_to_server.set_game_finished_vote:InvokeServer(unpack(args))
-                            selected_portal = true
+    if value_game_finished then
+        value_game_finished:GetPropertyChangedSignal("Value"):Connect(function()
+            warn(value_game_finished.Value)
+            if value_game_finished.Value and ui_farm_settings_portals_autoportal_toggle.Value then
+                task.wait(10)
+                local portal_ignore_list = {}
+                for z,b in pairs(ui_farm_settings_portals_tiers_dropdown.Value) do
+                    portal_ignore_list[z] = ui_farm_settings_portals_ignoremods_dropdown.Value
+                    warn(tostring(z).." : "..tostring(ui_farm_settings_portals_ignoremods_dropdown.Value))
+                end
+                for _,v in pairs(get_portals_by_id(ui_farm_settings_portals_portalid_input.Value)) do
+                    for b,x in pairs(portal_ignore_list) do
+                        if v['_unique_item_data']['_unique_portal_data']['portal_depth'] == tonumber(b) and not table.find(x, v['_unique_item_data']['_unique_portal_data']['challenge']) then
+                            if selected_portal == false then
+                                local args = {[1] = "replay",[2] = {["item_uuid"] = v["uuid"];}}
+                                client_to_server_folder["set_game_finished_vote"]:InvokeServer(unpack(args))
+                                selected_portal = true
+                            end
                         end
                     end
                 end
             end
-        end
-    end)
+        end)
+    end
 end)
 --\\
 
