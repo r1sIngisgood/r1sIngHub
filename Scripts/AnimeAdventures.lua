@@ -634,6 +634,7 @@ local function Play_Macro()
         local plr_stats = Players.LocalPlayer._stats
         local plr_resource_val = plr_stats.resource
         local cur_task = stepTable[""..i]["type"] or "?"
+        warn(i.."/"..totalSteps.." : "..tostring(cur_task))
         ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task)
         if cur_task == "spawn_unit" then
             local spawn_unit = stepTable[""..i]["unit"]
@@ -643,7 +644,7 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
             if plr_resource_val.Value < spawn_cost then
                 ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
-                repeat task.wait() until plr_resource_val.Value >= spawn_cost
+                repeat task.wait() warn("waiting for value") until plr_resource_val.Value >= spawn_cost
             end
             remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
         end
@@ -658,18 +659,17 @@ local function Play_Macro()
                     end
                 end
             end
-            local unit_stats = unit_obj:FindFirstChild("_stats")
-            if unit_obj and unit_stats then
-                local unit_data = get_unit_data_by_id(unit_stats.id.Value)
+            if unit_obj then
+                local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
                 for _,v in pairs(units_module) do
                     if v["id"] == unit_data["unit_id"] then
-                        unit_upgrade_cost = v["upgrade"][unit_stats.upgrade.Value + 1]["cost"]
+                        unit_upgrade_cost = v["upgrade"][unit_obj._stats.upgrade.Value + 1]["cost"]
                     end
                 end
                 ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
                 if plr_resource_val.Value < unit_upgrade_cost then
                     ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
-                    repeat task.wait() until plr_resource_val.Value >= unit_upgrade_cost
+                    repeat task.wait() warn("waiting for value") until plr_resource_val.Value >= unit_upgrade_cost
                 end
                 remote_upgrade_ingame:InvokeServer(unit_obj)
             else
@@ -819,7 +819,12 @@ end
 
 task.spawn(function()
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
-        task.wait(3)
+        if value_game_started then
+            if not value_game_started.Value then
+                repeat task.wait() until value_game_started.Value
+            end
+        end
+        task.wait(1)
         Play_Macro()
     end
 end)
