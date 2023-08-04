@@ -16,7 +16,7 @@ if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
-task.wait(3)
+task.wait(6)
 -- Game Stuff//
 local units_module = require(ReplicatedStorage.src.Data.Units)
 local maps_module = ReplicatedStorage.src.Data.Maps
@@ -629,7 +629,8 @@ local function Play_Macro()
     local totalSteps = chosen_macro_contents[2]
     local stepTable = chosen_macro_contents[1]
     for i = 1, totalSteps do
-        if not macro_playing then lib:Notify("macro_playing: false") break end
+        if not macro_playing then warn("MACRO_PLAYING = FALSE") break end
+        warn("task.wait")
         task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
         local plr_stats = Players.LocalPlayer._stats
         local plr_resource_val = plr_stats.resource
@@ -644,21 +645,25 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
             if plr_resource_val.Value < spawn_cost then
                 ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
-                repeat task.wait() warn("waiting for value") until plr_resource_val.Value >= spawn_cost
+                warn("waiting for value")
+                repeat task.wait() until plr_resource_val.Value >= spawn_cost
             end
             remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
-        end
-        if cur_task == "upgrade_unit_ingame" then
+        elseif cur_task == "upgrade_unit_ingame" then
             local unit_upgrade_cost
             local unit_pos = string_to_vector3(stepTable[""..i]["pos"])
-            local unit_obj
-            for _, unit in pairs(workspace._UNITS:GetChildren()) do
-                if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                    if (unit._hitbox.Position - unit_pos).Magnitude <= 1.5 and unit._stats.player.Value == Players.LocalPlayer then
-                        unit_obj = unit
+            local unit_obj = nil
+            repeat task.wait()
+                for _, unit in pairs(workspace._UNITS:GetChildren()) do
+                    warn(unit.Name)
+                    if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
+                        warn(tostring((unit._hitbox.Position - unit_pos).Magnitude))
+                        if (unit._hitbox.Position - unit_pos).Magnitude <= 2 and unit._stats.player.Value == Players.LocalPlayer then
+                            unit_obj = unit
+                        end
                     end
                 end
-            end
+            until unit_obj ~= nil
             if unit_obj then
                 local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
                 for _,v in pairs(units_module) do
@@ -675,8 +680,7 @@ local function Play_Macro()
             else
                 warn("Ray, kak ti eto delaesh, zaebal")
             end
-        end
-        if cur_task == "sell_unit_ingame" then
+        elseif cur_task == "sell_unit_ingame" then
             local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
             local unit_obj
             for _, unit in pairs(workspace._UNITS:GetChildren()) do
@@ -689,6 +693,7 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
             remote_sell_ingame:InvokeServer(unit_obj)
         end
+        warn(3)
     end
     macro_playing = false
     lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
