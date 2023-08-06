@@ -213,7 +213,9 @@ local function Save_Configuration()
             end
         end
         for toggle_name, val in pairs(getgenv().Toggles) do
-            options_table.toggle_table[toggle_name] = val.Value
+            if not table.find(config_ignore_list, toggle_name) then
+                options_table.toggle_table[toggle_name] = val.Value
+            end
         end
         local jsonencoded_options_table = HttpService:JSONEncode(options_table)
         writefile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_AnimeAdventures.json", jsonencoded_options_table)
