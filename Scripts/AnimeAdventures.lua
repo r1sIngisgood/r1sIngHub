@@ -16,7 +16,7 @@ if not isfile("r1sIngHub"..[[\]].."configs"..[[\]]..Players.LocalPlayer.Name.."_
 
 local SERVER_READY = workspace:WaitForChild("SERVER_READY")
 repeat task.wait() until SERVER_READY.Value
-task.wait(6)
+task.wait(8)
 -- Game Stuff//
 local units_module = require(ReplicatedStorage.src.Data.Units)
 local maps_module = ReplicatedStorage.src.Data.Maps
