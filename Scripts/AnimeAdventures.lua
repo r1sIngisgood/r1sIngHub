@@ -625,6 +625,9 @@ local function Play_Macro()
     if game.PlaceId == 8304191830 then lib:Notify("You can't play macro in a lobby, dumbo.") return end
     if chosen_macro_contents == nil then lib:Notify("Choose a macro first.") return end
     if type(chosen_macro_contents) ~= "table" then lib:Notify("This macro is broken or empty.") return end
+    if not value_game_started.Value then
+        repeat task.wait() until value_game_started.Value
+    end
     macro_playing = true
     local totalSteps = chosen_macro_contents[2]
     local stepTable = chosen_macro_contents[1]
