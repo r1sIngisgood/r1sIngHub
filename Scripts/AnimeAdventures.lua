@@ -656,7 +656,7 @@ local function Play_Macro()
             local unit_upgrade_cost
             local unit_pos = string_to_vector3(stepTable[""..i]["pos"])
             local unit_obj = nil
-            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nTrying to find unit object.")
+            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nTrying to find unit object.")
             repeat task.wait()
                 for _, unit in pairs(workspace._UNITS:GetChildren()) do
                     --warn(unit.Name)
