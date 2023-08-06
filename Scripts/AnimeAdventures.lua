@@ -251,6 +251,7 @@ local function Load_Configuration()
 end
 --\
 local ui_settings_lefttabbox = ui_tabs.ui_settings:AddLeftTabbox()
+local ui_settings_configgroupbox = ui_tabs.ui_settings:AddRightGroupbox("Configuration")
 local ui_settings_lefttabbox_ui = ui_settings_lefttabbox:AddTab("UI Settings")
 ui_settings_lefttabbox_ui:AddButton("Unload", function()
     lib:Unload()
@@ -259,6 +260,9 @@ ui_settings_lefttabbox_ui:AddButton("Unload", function()
 end)
 ui_settings_lefttabbox_ui:AddLabel("UI Keybind"):AddKeyPicker("MenuKeybind", {Default = "End", NoUI = true, Text = "UI Keybind"})
 lib.ToggleKeybind = getgenv().Options.MenuKeybind
+ui_settings_configgroupbox:AddButton("Force Save Config", function()
+    Save_Configuration()
+end)
 --\\
 
 -- Macro //
@@ -653,7 +657,10 @@ local function Play_Macro()
                 --warn("waiting for value")
                 repeat task.wait() until plr_resource_val.Value >= spawn_cost
             end
-            remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
+            task.spawn(function()
+                remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
+            end)
+            ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nSpawned Unit.")
         elseif cur_task == "upgrade_unit_ingame" then
             local unit_upgrade_cost
             local unit_pos = string_to_vector3(stepTable[""..i]["pos"])
@@ -682,7 +689,10 @@ local function Play_Macro()
                     ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
                     repeat task.wait() --[[warn("waiting for value")]] until plr_resource_val.Value >= unit_upgrade_cost
                 end
-                remote_upgrade_ingame:InvokeServer(unit_obj)
+                task.spawn(function()
+                    remote_upgrade_ingame:InvokeServer(unit_obj)
+                end)
+                ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUpgraded Unit.")
             else
                 --warn("Ray, kak ti eto delaesh, zaebal")
             end
@@ -697,7 +707,9 @@ local function Play_Macro()
                 end
             end
             ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
-            remote_sell_ingame:InvokeServer(unit_obj)
+            task.spawn(function()
+                remote_sell_ingame:InvokeServer(unit_obj)
+            end)
         end
     end
     macro_playing = false
