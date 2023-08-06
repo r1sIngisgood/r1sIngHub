@@ -630,12 +630,12 @@ local function Play_Macro()
     local stepTable = chosen_macro_contents[1]
     for i = 1, totalSteps do
         if not macro_playing then warn("MACRO_PLAYING = FALSE") break end
-        warn("task.wait")
+        --warn("task.wait")
         task.wait(getgenv().Options.macro_play_stepdelay_slider.Value + 0.3)
         local plr_stats = Players.LocalPlayer._stats
         local plr_resource_val = plr_stats.resource
         local cur_task = stepTable[""..i]["type"] or "?"
-        warn(i.."/"..totalSteps.." : "..tostring(cur_task))
+        --warn(i.."/"..totalSteps.." : "..tostring(cur_task))
         ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task)
         if cur_task == "spawn_unit" then
             local spawn_unit = stepTable[""..i]["unit"]
@@ -645,7 +645,7 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]))
             if plr_resource_val.Value < spawn_cost then
                 ui_macro_play_progress_label:SetText("Progress: "..tostring(i).."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(stepTable[""..i]["unit"]).."\nWaiting for: "..tostring(spawn_cost).." Y")
-                warn("waiting for value")
+                --warn("waiting for value")
                 repeat task.wait() until plr_resource_val.Value >= spawn_cost
             end
             remote_place:InvokeServer(unit_data["uuid"], spawn_cframe)
@@ -655,9 +655,9 @@ local function Play_Macro()
             local unit_obj = nil
             repeat task.wait()
                 for _, unit in pairs(workspace._UNITS:GetChildren()) do
-                    warn(unit.Name)
+                    --warn(unit.Name)
                     if unit:FindFirstChild("_hitbox") and unit:FindFirstChild("_stats") then
-                        warn(tostring((unit._hitbox.Position - unit_pos).Magnitude))
+                        --warn(tostring((unit._hitbox.Position - unit_pos).Magnitude))
                         if (unit._hitbox.Position - unit_pos).Magnitude <= 2 and unit._stats.player.Value == Players.LocalPlayer then
                             unit_obj = unit
                         end
@@ -674,11 +674,11 @@ local function Play_Macro()
                 ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name))
                 if plr_resource_val.Value < unit_upgrade_cost then
                     ui_macro_play_progress_label:SetText("Progress: "..i.."/"..tostring(totalSteps).."\nCurrent task: "..tostring(cur_task).."\nUnit: "..tostring(unit_obj.Name).."\nWaiting for: "..tostring(unit_upgrade_cost).." Y")
-                    repeat task.wait() warn("waiting for value") until plr_resource_val.Value >= unit_upgrade_cost
+                    repeat task.wait() --[[warn("waiting for value")]] until plr_resource_val.Value >= unit_upgrade_cost
                 end
                 remote_upgrade_ingame:InvokeServer(unit_obj)
             else
-                warn("Ray, kak ti eto delaesh, zaebal")
+                --warn("Ray, kak ti eto delaesh, zaebal")
             end
         elseif cur_task == "sell_unit_ingame" then
             local unit_pos = string_to_cframe(stepTable[""..i]["pos"])
@@ -693,7 +693,6 @@ local function Play_Macro()
             ui_macro_play_progress_label:SetText("Progress: "..i.."/"..totalSteps.."\nCurrent task: "..cur_task.."\nUnit: "..unit_obj.Name)
             remote_sell_ingame:InvokeServer(unit_obj)
         end
-        warn(3)
     end
     macro_playing = false
     lib:Notify("Macro '"..getgenv().Options.current_macro_dropdown.Value.."' Completed.")
