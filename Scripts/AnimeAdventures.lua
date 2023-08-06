@@ -860,12 +860,4 @@ task.spawn(function()
             end
         end)
     end
-    while true do
-        if not lib.Unloaded then
-            task.wait(5)
-            Save_Configuration()
-        else
-            break
-        end
-    end
 end)
