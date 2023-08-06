@@ -757,49 +757,8 @@ ui_macro_record_toggle:OnChanged(function()
         last_record_state = true
     end
 end)
-local on_namecall = function(object, ...)
-    local args = {...}
-    local method = tostring(getnamecallmethod())
-    local isRemoteMethod = method == "FireServer" or method == "InvokeServer"
-    if object.Name ~= "CharacterSoundEvent" and method:match("Server") and isRemoteMethod and ui_macro_record_toggle.Value and lib.Unloaded ~= true then
-        if object.Name == "spawn_unit" then
-            local unit_data = get_unit_data_by_uuid(args[1])
-            local unit_cframe = args[2]
-            local unit_cost
-            for a,b in pairs(units_module) do
-                if b["id"] == unit_data["unit_id"] then
-                    unit_cost = b["cost"]
-                end
-            end
-            current_macro_record_data[""..current_record_step] = {type = "spawn_unit", money = unit_cost, unit = unit_data["unit_id"], cframe = tostring(unit_cframe)}
-            current_record_step += 1
-        end
-        if object.Name == "upgrade_unit_ingame" then
-            local unit_obj = args[1]
-            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
-            local unit_upgrade_cost
-            for i,v in pairs(units_module) do
-                if v["id"] == unit_data["unit_id"] then
-                    unit_upgrade_cost = v["upgrade"][unit_obj._stats.upgrade.Value + 1]["cost"]
-                end
-            end
-            current_macro_record_data[""..current_record_step] = {type = "upgrade_unit_ingame", money = unit_upgrade_cost, pos = tostring(unit_obj._hitbox.Position)}
-            current_record_step += 1
-        end
-        if object.Name == "sell_unit_ingame" then
-            local unit_obj = args[1]
-            local unit_pos = unit_obj._hitbox.CFrame
-            current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
-            current_record_step += 1
-        end
-    end
-    return game_namecall(object, ...)
-end
-game_metatable.__namecall = on_namecall
 
---lib_SaveManager:SetLibrary(lib)
---lib_SaveManager:BuildConfigSection(ui_tabs.ui_settings)
---lib_SaveManager:LoadAutoloadConfig()
+
 if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv().Options.current_macro_dropdown.Value ~= {} then
     chosen_macro_contents = {getgenv().Options.current_macro_dropdown.Value}
     local stepCount = 0
@@ -871,8 +830,8 @@ end)
 --\\
 
 task.spawn(function()
-    task.wait(5)
     for _, macro_dropdown in pairs(map_dropdowns) do
+        task.wait()
         macro_dropdown:OnChanged(function()
             if macro_dropdown.Value ~= false then
                 Save_Configuration()
@@ -880,3 +839,43 @@ task.spawn(function()
         end)
     end
 end)
+
+local on_namecall = function(object, ...)
+    local args = {...}
+    local method = tostring(getnamecallmethod())
+    local isRemoteMethod = method == "FireServer" or method == "InvokeServer"
+    if object.Name ~= "CharacterSoundEvent" and method:match("Server") and isRemoteMethod and ui_macro_record_toggle.Value and lib.Unloaded ~= true then
+        if object.Name == "spawn_unit" then
+            local unit_data = get_unit_data_by_uuid(args[1])
+            local unit_cframe = args[2]
+            local unit_cost
+            for a,b in pairs(units_module) do
+                if b["id"] == unit_data["unit_id"] then
+                    unit_cost = b["cost"]
+                end
+            end
+            current_macro_record_data[""..current_record_step] = {type = "spawn_unit", money = unit_cost, unit = unit_data["unit_id"], cframe = tostring(unit_cframe)}
+            current_record_step += 1
+        end
+        if object.Name == "upgrade_unit_ingame" then
+            local unit_obj = args[1]
+            local unit_data = get_unit_data_by_id(unit_obj._stats.id.Value)
+            local unit_upgrade_cost
+            for i,v in pairs(units_module) do
+                if v["id"] == unit_data["unit_id"] then
+                    unit_upgrade_cost = v["upgrade"][unit_obj._stats.upgrade.Value + 1]["cost"]
+                end
+            end
+            current_macro_record_data[""..current_record_step] = {type = "upgrade_unit_ingame", money = unit_upgrade_cost, pos = tostring(unit_obj._hitbox.Position)}
+            current_record_step += 1
+        end
+        if object.Name == "sell_unit_ingame" then
+            local unit_obj = args[1]
+            local unit_pos = unit_obj._hitbox.CFrame
+            current_macro_record_data[""..current_record_step] = {type = "sell_unit_ingame", pos = tostring(unit_pos)}
+            current_record_step += 1
+        end
+    end
+    return game_namecall(object, ...)
+end
+game_metatable.__namecall = on_namecall
