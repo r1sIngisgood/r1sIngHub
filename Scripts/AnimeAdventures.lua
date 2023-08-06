@@ -285,14 +285,16 @@ repeat
             end
         end
     end
+    task.wait(1)
 until #equipped_units > 0
 
 repeat
-for i,v in pairs(getgc(true)) do
-    if type(v) == "table" and rawget(v, "xp") then
-        table.insert(player_unit_inventory, v)
+    for i,v in pairs(getgc(true)) do
+        if type(v) == "table" and rawget(v, "xp") then
+            table.insert(player_unit_inventory, v)
+        end
     end
-end
+    task.wait(1)
 until #player_unit_inventory > 0
 
 local ui_macro_leftgroupbox = ui_tabs.macro:AddLeftGroupbox("Macro Config")
