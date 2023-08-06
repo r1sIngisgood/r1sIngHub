@@ -725,48 +725,7 @@ ui_macro_play_toggle:OnChanged(function()
         macro_playing = false
     end
 end)
--- MACRO RECORDING
-local game_metatable = getrawmetatable(game)
-local game_namecall = game_metatable.__namecall
 
-local makewriteable
-if setreadonly ~= nil then
-    makewriteable = function() setreadonly(game_metatable, false) end
-elseif make_writeable ~= nil then
-    makewriteable = function() make_writeable(game_metatable) end
-end
-makewriteable()
-
-local current_record_step = 1
-local current_macro_record_data = {}
-local last_record_state = false
-ui_macro_record_toggle:OnChanged(function()
-    if getgenv().Toggles.macro_record_toggle.Value == false then
-        if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..tostring(getgenv().Options.current_macro_dropdown.Value)..".json") or not getgenv().Options.current_macro_dropdown.Value then return end
-        if last_record_state == false then return end
-        local new_file_content = HttpService:JSONEncode(current_macro_record_data)
-        writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json", new_file_content)
-        last_record_state = false
-    else
-        if not getgenv().Options.current_macro_dropdown.Value then lib:Notify("Choose a macro first!") return end
-        if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json") then
-            getgenv().Options.current_macro_dropdown:SetValues()
-            lib:Notify("File doesnt exist?")
-            return
-        end
-        last_record_state = true
-    end
-end)
-
-
-if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv().Options.current_macro_dropdown.Value ~= {} then
-    chosen_macro_contents = {getgenv().Options.current_macro_dropdown.Value}
-    local stepCount = 0
-    for i,v in pairs(chosen_macro_contents[1]) do
-        stepCount += 1
-    end
-    table.insert(chosen_macro_contents, stepCount)
-end
 -- Macro Finding//
 if remote_get_level_data then
     local level_data = remote_get_level_data:InvokeServer()
@@ -821,6 +780,49 @@ task.spawn(function()
     antiAfkConnection:Disconnect()
 end)
 --\\
+
+-- MACRO RECORDING
+local game_metatable = getrawmetatable(game)
+local game_namecall = game_metatable.__namecall
+
+local makewriteable
+if setreadonly ~= nil then
+    makewriteable = function() setreadonly(game_metatable, false) end
+elseif make_writeable ~= nil then
+    makewriteable = function() make_writeable(game_metatable) end
+end
+makewriteable()
+
+local current_record_step = 1
+local current_macro_record_data = {}
+local last_record_state = false
+ui_macro_record_toggle:OnChanged(function()
+    if getgenv().Toggles.macro_record_toggle.Value == false then
+        if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..tostring(getgenv().Options.current_macro_dropdown.Value)..".json") or not getgenv().Options.current_macro_dropdown.Value then return end
+        if last_record_state == false then return end
+        local new_file_content = HttpService:JSONEncode(current_macro_record_data)
+        writefile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json", new_file_content)
+        last_record_state = false
+    else
+        if not getgenv().Options.current_macro_dropdown.Value then lib:Notify("Choose a macro first!") return end
+        if not isfile("r1sIngHub"..[[\]].."Anime Adventures"..[[\]]..getgenv().Options.current_macro_dropdown.Value..".json") then
+            getgenv().Options.current_macro_dropdown:SetValues()
+            lib:Notify("File doesnt exist?")
+            return
+        end
+        last_record_state = true
+    end
+end)
+
+
+if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv().Options.current_macro_dropdown.Value ~= {} then
+    chosen_macro_contents = {getgenv().Options.current_macro_dropdown.Value}
+    local stepCount = 0
+    for i,v in pairs(chosen_macro_contents[1]) do
+        stepCount += 1
+    end
+    table.insert(chosen_macro_contents, stepCount)
+end
 
 task.spawn(function()
     for _, macro_dropdown in pairs(map_dropdowns) do
