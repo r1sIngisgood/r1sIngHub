@@ -768,7 +768,6 @@ if type(getgenv().Options.current_macro_dropdown.Value) == "table" and getgenv()
     table.insert(chosen_macro_contents, stepCount)
 end
 -- Macro Finding//
-task.wait(2)
 if remote_get_level_data then
     local level_data = remote_get_level_data:InvokeServer()
     local level_type = nil
@@ -786,6 +785,7 @@ if remote_get_level_data then
     print(level_type)
     local macro_dropdown_string_map = "macro_map_"..tostring(level_type).."_"..tostring(level_data.map).."_dropdown"
     local macro_dropdown_string_id  = "macro_map_"..tostring(level_type).."_"..tostring(level_data.id).."_dropdown"
+    warn(tostring(macro_dropdown_string_map).."\n"..tostring(macro_dropdown_string_id))
     if getgenv().Options[macro_dropdown_string_map] then
         warn("Found "..macro_dropdown_string_map)
         if getgenv().Options[macro_dropdown_string_map].Value and getgenv().Options[macro_dropdown_string_map].Value ~= "" then
@@ -802,14 +802,7 @@ if remote_get_level_data then
 end
 
 task.spawn(function()
-    task.wait(2)
     if type(getgenv().Options.current_macro_dropdown.Value) == "string" and getgenv().Options.current_macro_dropdown.Value ~= "" and getgenv().Toggles.macro_play_toggle.Value then
-        if value_game_started then
-            if not value_game_started.Value then
-                repeat task.wait() until value_game_started.Value
-            end
-        end
-        task.wait(1)
         Play_Macro()
     end
 end)
